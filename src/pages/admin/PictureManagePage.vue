@@ -2,9 +2,12 @@
   <div id="PictureManagePage">
     <a-flex justify="space-between">
       <h2>图片管理</h2>
-      <a-button type="primary" href="/add_picture" target="_blank">+ 创建图片</a-button>
+      <a-space>
+        <a-button type="primary" href="/add_picture" target="_blank">+ 创建图片</a-button>
+        <a-button type="primary" href="/add_picture/batch" target="_blank" ghost>+ 批量创建图片</a-button>
+      </a-space>
     </a-flex>
-
+    <div style="margin-bottom: 16px"/>
     <!-- 搜索表单 -->
     <a-form layout="inline" :model="searchParams" @finish="doSearch">
       <a-form-item label="关键词">
@@ -39,6 +42,8 @@
         <a-button type="primary" html-type="submit">搜索</a-button>
       </a-form-item>
     </a-form>
+
+    <div style="margin-bottom: 16px"/>
 
     <a-table
       :columns="columns"
