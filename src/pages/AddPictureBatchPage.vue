@@ -102,9 +102,6 @@ onMounted(() => {
 const route = useRoute()
 
 
-onMounted(() => {
-  getOldPicture()
-})
 </script>
 
 <style scoped>
