@@ -34,7 +34,7 @@ import {
   getPictureVoByIdUsingGet,
   listPictureTagCategoryUsingGet, uploadPictureByBatchUsingPost
 } from '@/api/pictureController.ts'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 const picture = ref<API.PictureVO>()
 const formData = reactive<API.PictureUploadByBatchRequest>({
@@ -98,8 +98,6 @@ const getTagCategoryOptions = async () => {
 onMounted(() => {
   getTagCategoryOptions()
 })
-
-const route = useRoute()
 
 
 </script>
