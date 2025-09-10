@@ -31,7 +31,6 @@
 import { onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
-  getPictureVoByIdUsingGet,
   listPictureTagCategoryUsingGet, uploadPictureByBatchUsingPost
 } from '@/api/pictureController.ts'
 import { useRouter } from 'vue-router'
