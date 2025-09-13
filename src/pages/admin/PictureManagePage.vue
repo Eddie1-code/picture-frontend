@@ -255,6 +255,7 @@ const doTableChange = (page: any) => {
 const fetchData = async () => {
   const res = await listPictureByPageUsingPost({
     ...searchParams,
+    nullSpaceId: true, // 管理员查看所有图片时，spaceId 传 null【实现管理员只能看到公共空间，而非所有人的！因为只需要看公共空间的进行审核】
   })
   if (res.data.data) {
     dataList.value = res.data.data.records ?? []
