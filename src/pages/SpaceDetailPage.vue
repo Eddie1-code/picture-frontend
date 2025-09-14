@@ -12,18 +12,19 @@
         >
           <a-progress
             type="circle"
+            :percent="((space.totalSize * 100) / space.maxSize).toFixed(1)"
             :size="42"
-            :percent="((space.totalSize ?? 0) * 100 / (space.maxSize ?? 1)).toFixed(1)"
           />
+<!--            :percent="(((space.totalSize ?? 0) * 100) / (space.maxSize ?? 1)).toFixed(1)"-->
         </a-tooltip>
       </a-space>
     </a-flex>
     <div style="margin-bottom: 16px"></div>
     <!-- 搜索表单 -->
-    <PictureSearchForm :onSearch="onSearch"/>
+    <PictureSearchForm :onSearch="onSearch" />
     <div style="margin-bottom: 16px"></div>
     <!-- 图片列表 -->
-    <PictureList :dataList="dataList" :loading="loading" :show-op="true" :onReload="fetchData"/>
+    <PictureList :dataList="dataList" :loading="loading" :show-op="true" :onReload="fetchData" />
     <a-pagination
       style="text-align: right"
       v-model:current="searchParams.current"
@@ -36,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import {  onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getSpaceVoByIdUsingGet } from '@/api/spaceController.ts'
 import { message } from 'ant-design-vue'
 import { listPictureVoByPageUsingPost } from '@/api/pictureController.ts'

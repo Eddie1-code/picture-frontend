@@ -163,5 +163,6 @@ const doDownload = () => {
 
 <style scoped>
 #pictureDetailPage {
+  margin-bottom: 16px;
 }
 </style>
