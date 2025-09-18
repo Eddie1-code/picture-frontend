@@ -4,20 +4,34 @@
       <h2>空间管理</h2>
       <a-space>
         <a-button type="primary" href="/add_space" target="_blank">+ 创建空间</a-button>
-        <a-button type="primary" href="/add_space/batch" target="_blank" ghost
-          >+ 批量创建空间</a-button
+        <a-button
+          type="primary"
+          ghost
+          :icon="h(BarChartOutlined)"
+          href="/space_analyze?queryPublic=1"
+          target="_blank"
         >
+          分析公共图库
+        </a-button>
+        <a-button
+          type="primary"
+          ghost
+          :icon="h(BarChartOutlined)"
+          href="/space_analyze?queryAll=1"
+          target="_blank"
+        >
+          分析全部空间
+        </a-button>
+        <a-button type="primary" href="/add_space/batch" target="_blank" ghost
+          >+ 批量创建空间
+        </a-button>
       </a-space>
     </a-flex>
     <div style="margin-bottom: 16px" />
     <!-- 搜索表单 -->
     <a-form layout="inline" :model="searchParams" @finish="doSearch">
       <a-form-item label="空间名称">
-        <a-input
-          v-model:value="searchParams.spaceName"
-          placeholder="请输入空间名称"
-          allow-clear
-        />
+        <a-input v-model:value="searchParams.spaceName" placeholder="请输入空间名称" allow-clear />
       </a-form-item>
       <a-form-item name="spaceLevel" label="空间级别">
         <a-select
@@ -51,7 +65,7 @@
         </template>
         <template v-if="column.dataIndex === 'SpaceUseInfo'">
           <div>大小：{{ formatSize(record.totalSize) }} / {{ formatSize(record.maxSize) }}</div>
-          <div>数量：{{ record.totalCount }} / {{ record.maxCount}}</div>
+          <div>数量：{{ record.totalCount }} / {{ record.maxCount }}</div>
         </template>
 
         <template v-else-if="column.dataIndex === 'createTime'">
@@ -62,6 +76,14 @@
         </template>
         <template v-else-if="column.key === 'action'">
           <a-space wrap style="justify-content: center; width: 100%; display: flex">
+            <a-button
+              type="primary"
+              style="display: block; margin-bottom: 8px; width: 80px"
+              :href="`/space_analyze?spaceId=${record.id}`"
+              target="_blank"
+            >
+              分析
+            </a-button>
             <a-button
               type="primary"
               ghost
@@ -88,7 +110,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, h, onMounted, reactive, ref } from 'vue'
 import {
   deleteSpaceUsingPost,
   listSpaceByPageUsingPost,
@@ -98,6 +120,7 @@ import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { SPACE_LEVEL_MAP, SPACE_LEVEL_OPTIONS } from '../../constants/space.ts'
 import { formatSize } from '../../utils'
+import { BarChartOutlined } from '@ant-design/icons-vue'
 
 const columns = [
   {
