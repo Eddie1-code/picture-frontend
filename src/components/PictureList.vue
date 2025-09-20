@@ -38,11 +38,10 @@
                 <share-alt-outlined @click="(e) => doShare(picture, e)" />
               </a-tooltip>
               <a-tooltip title="编辑图片">
-                <edit-outlined @click="(e) => doEdit(picture, e)" />
+                <edit-outlined v-if="canEdit" @click="(e) => doEdit(picture, e)" />
               </a-tooltip>
               <a-tooltip title="删除图片">
-                <delete-outlined @click="(e) => doDelete(picture, e)" />
-              </a-tooltip>
+                <delete-outlined v-if="canDelete" @click="(e) => doDelete(picture, e)" />              </a-tooltip>
             </template>
           </a-card>
         </a-list-item>
@@ -69,6 +68,8 @@ interface Props {
   dataList?: API.PictureVO[]
   loading?: boolean
   showOp?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
   onReload?: () => void
 }
 
@@ -76,6 +77,8 @@ const props = withDefaults(defineProps<Props>(), {
   dataList: () => [],
   loading: false,
   showOp: false,
+  canEdit: false,
+  canDelete: false,
 })
 
 // 跳转至图片详情
