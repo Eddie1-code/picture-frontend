@@ -105,7 +105,7 @@ import {
   ShareAltOutlined,
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
-import { downloadImage, formatSize, toHexColor } from '../utils'
+import { downloadImage, formatSize, toHexColor } from '@/utils'
 import ShareModal from '@/components/ShareModal.vue'
 import { SPACE_PERMISSION_ENUM } from '@/constants/space.ts'
 

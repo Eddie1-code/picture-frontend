@@ -32,7 +32,9 @@
         >
           空间分析
         </a-button>
-        <a-button :icon="h(EditOutlined)" @click="doBatchEdit"> 批量编辑</a-button>
+        <a-button :icon="h(EditOutlined)" v-if="canEditPicture" @click="doBatchEdit">
+          批量编辑</a-button
+        >
         <a-tooltip
           :title="`占用空间 ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`"
         >

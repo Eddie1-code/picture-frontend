@@ -73,6 +73,7 @@
       :imageUrl="picture?.url"
       :picture="picture"
       :spaceId="spaceId"
+      :space="space"
       :onSuccess="onCropSuccess"
     />
   </div>
@@ -80,7 +81,7 @@
 
 <script setup lang="ts">
 import PictureUpload from '@/components/PictureUpload.vue'
-import { computed, h, onMounted, reactive, ref } from 'vue'
+import { computed, h, onMounted, reactive, ref, watchEffect } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   editPictureUsingPost,
@@ -92,18 +93,16 @@ import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
 import ImageCropper from '@/components/ImageCropper.vue'
 import { EditOutlined, FullscreenOutlined } from '@ant-design/icons-vue'
 import ImageOutPainting from '@/components/ImageOutPainting.vue'
+import { getSpaceVoByIdUsingGet } from '@/api/spaceController.ts'
 
 const picture = ref<API.PictureVO>()
 const pictureForm = reactive<API.PictureEditRequest>({})
 const uploadType = ref<'file' | 'url'>('file') // 上传方式，默认为文件上传
+
+
 // 空间 id
 const spaceId = computed(() => {
-  const val = route.query?.spaceId
-  if (typeof val === 'string' && val.trim() !== '') {
-    const num = Number(val)
-    return isNaN(num) ? undefined : num
-  }
-  return undefined
+  return route.query?.spaceId
 })
 
 const router = useRouter()
@@ -145,7 +144,6 @@ const tagOptions = ref<Array<{ value: string; label: string }>>([])
 
 /**
  * 获取标签和分类选项
- * @param values
  */
 const getTagCategoryOptions = async () => {
   const res = await listPictureTagCategoryUsingGet()
@@ -230,6 +228,26 @@ const onImageOutPaintingSuccess = (newPicture: API.PictureVO) => {
   picture.value = newPicture
 }
 // endregion
+
+
+const space = ref<API.SpaceVO>()
+
+// 获取空间信息
+const fetchSpace = async () => {
+  // 获取数据
+  if (spaceId.value) {
+    const res = await getSpaceVoByIdUsingGet({
+      id: spaceId.value,
+    })
+    if (res.data.code === 0 && res.data.data) {
+      space.value = res.data.data
+    }
+  }
+}
+
+watchEffect(() => {
+  fetchSpace()
+})
 </script>
 
 <style scoped>

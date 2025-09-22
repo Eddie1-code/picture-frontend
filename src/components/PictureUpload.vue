@@ -40,7 +40,7 @@ const handleUpload = async ({ file }: any) => {
   try {
     const params: API.PictureUploadRequest = props.picture ? { id: props.picture.id } : {};
     params.spaceId = props.spaceId;
-    const res = await uploadPictureUsingPost(params, {}, file) as { data: { code: number; data?: API.PictureVO; message?: string } }
+    const res = await uploadPictureUsingPost(params, {}, file)
     if (res.data.code === 0 && res.data.data) {
       message.success('图片上传成功')
       props.onSuccess?.(res.data.data)
