@@ -26,6 +26,13 @@
               <ASpace>
                 <a-avatar :src="loginUserStore.loginUser.userAvatar" />
                 {{ loginUserStore.loginUser.userName ?? '无名' }}
+                <template v-if="loginUserStore.loginUser.userRole=='vip'">
+                  <img
+                    src="@/assets/vip-icon.jpg"
+                    alt="VIP"
+                    style="width: 20px; vertical-align: middle"
+                  />
+                </template>
               </ASpace>
               <template #overlay>
                 <a-menu>
@@ -74,6 +81,11 @@ const originItems = [
     icon: () => h(HomeOutlined),
     label: '主页',
     title: '主页',
+  },
+  {
+    key: '/user_exchange_vip',
+    label: '兑换会员',
+    title: '兑换会员',
   },
   {
     key: '/add_picture',
@@ -131,7 +143,7 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
   return menus?.filter((menu) => {
     if (menu?.key?.startsWith('/admin')) {
       const loginUser = loginUserStore.loginUser
-      if (!loginUser || loginUser.userRole !== "admin") {
+      if (!loginUser || loginUser.userRole !== 'admin') {
         return false
       }
     }
@@ -141,7 +153,6 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
 
 // 展示在菜单的路由数组
 const items = computed<MenuProps['items']>(() => filterMenus(originItems))
-
 
 //监听路由变化，更新高亮菜单项（钩子函数）
 router.afterEach((to) => {
