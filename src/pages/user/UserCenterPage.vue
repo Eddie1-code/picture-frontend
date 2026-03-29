@@ -8,7 +8,16 @@
       <a-input v-model:value="form.userName" />
     </a-form-item>
     <a-form-item label="用户密码">
-      <a-input v-model:value="form.userPassword" type="password" placeholder="不修改请留空" />
+      <a-input 
+        v-model:value="form.userPassword" 
+        :type="passwordVisible ? 'text' : 'password'" 
+        placeholder="不修改请留空"
+      >
+        <template #suffix>
+          <EyeInvisibleOutlined v-if="passwordVisible" @click="passwordVisible = false" />
+          <EyeOutlined v-else @click="passwordVisible = true" />
+        </template>
+      </a-input>
     </a-form-item>
     <a-form-item label="个人简介">
       <a-textarea v-model:value="form.userProfile" :rows="4" />
@@ -32,10 +41,10 @@
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { PlusOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue'
 import {
-  getLoginUserUsingGet,
-  updateUserUsingPost
+  getLoginUserUsingGet, updateMyProfileUsingPost,
+  uploadAvatarUsingPost
 } from '@/api/userController'
 
 const form = ref({
@@ -45,6 +54,8 @@ const form = ref({
   userProfile: '',
   userAvatar: ''
 })
+
+const passwordVisible = ref(false)
 
 onMounted(async () => {
   const res = await getLoginUserUsingGet()
@@ -56,7 +67,7 @@ onMounted(async () => {
 
 const doUpdate = async () => {
   const updateData = { ...form.value }
-  const res = await updateUserUsingPost(updateData)
+  const res = await updateMyProfileUsingPost(updateData)
   if (res.data?.code === 0) {
     message.success('修改成功')
   } else {
@@ -71,15 +82,18 @@ const beforeUpload = (file: File) => {
   return isImg
 }
 const customRequest = async ({ file, onSuccess }: any) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  const res = await fetch('/api/user/upload/avatar', { method: 'POST', body: formData })
-  const data = await res.json()
-  if (data?.data?.url) {
-    form.value.userAvatar = data.data.url
-    onSuccess()
-  } else {
-    message.error('上传失败')
+  try {
+    const res = await uploadAvatarUsingPost({}, file)
+    // 添加类型断言，修复类型错误
+    const response = res as any
+    if (response.data?.code === 0 && response.data?.data) {
+      form.value.userAvatar = response.data.data
+      onSuccess()
+    } else {
+      message.error('上传失败：' + (response.data?.message || '未知错误'))
+    }
+  } catch (error) {
+    message.error('上传失败：' + (error instanceof Error ? error.message : '未知错误'))
   }
 }
 </script>
