@@ -42,10 +42,8 @@
 import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue'
-import {
-  getLoginUserUsingGet, updateMyProfileUsingPost,
-  uploadAvatarUsingPost
-} from '@/api/userController'
+import { getLoginUserUsingGet, updateMyProfileUsingPost, uploadAvatarUsingPost } from '@/api/userController'
+import { useLoginUserStore } from '@/stores/useLoginUserStore.ts' // 导入登录用户状态管理
 
 const form = ref({
   userAccount: '',
@@ -56,6 +54,7 @@ const form = ref({
 })
 
 const passwordVisible = ref(false)
+const loginUserStore = useLoginUserStore() // 初始化登录用户状态管理
 
 onMounted(async () => {
   const res = await getLoginUserUsingGet()
@@ -66,14 +65,26 @@ onMounted(async () => {
 })
 
 const doUpdate = async () => {
-  const updateData = { ...form.value }
-  const res = await updateMyProfileUsingPost(updateData)
-  if (res.data?.code === 0) {
-    message.success('修改成功')
-  } else {
-    message.error('修改失败：' + (res.data?.message || '未知错误'))
+  try {
+    const updateData = { ...form.value };
+    const res = await updateMyProfileUsingPost(updateData);
+    if (res.data?.code === 0) {
+      message.success('修改成功');
+      // 修改成功后重新获取用户信息，更新页面显示
+      const userRes = await getLoginUserUsingGet();
+      if (userRes.data?.code === 0 && userRes.data?.data) {
+        Object.assign(form.value, userRes.data.data);
+        form.value.userPassword = '';
+        // 更新全局状态，同步右上角用户信息
+        loginUserStore.setLoginUser(userRes.data.data);
+      }
+    } else {
+      message.error('修改失败：' + (res.data?.message || '未知错误'));
+    }
+  } catch (error) {
+    message.error('修改失败：' + (error instanceof Error ? error.message : '网络错误'));
   }
-}
+};
 
 // 头像上传相关
 const beforeUpload = (file: File) => {
@@ -93,7 +104,7 @@ const customRequest = async ({ file, onSuccess }: any) => {
       message.error('上传失败：' + (response.data?.message || '未知错误'))
     }
   } catch (error) {
-    message.error('上传失败：' + (error instanceof Error ? error.message : '未知错误'))
+    message.error('上传失败：' + (error instanceof Error ? error.message : '网络错误'))
   }
 }
 </script>

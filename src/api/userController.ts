@@ -155,7 +155,7 @@ export async function updateMyProfileUsingPost(
   body: API.UserUpdateRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseBoolean_>('/api/user/update/my', {
+  return request<API.BaseResponseUserVO_>('/api/user/update/my', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -196,9 +196,7 @@ export async function uploadAvatarUsingPost(
   return request<API.BaseResponseString_>('/api/user/upload/avatar', {
     method: 'POST',
     data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    },
+    requestType: 'form',
     ...(options || {}),
   })
 }

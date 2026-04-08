@@ -6,7 +6,7 @@ const DEV_BASE_URL = "http://localhost:8123";
 const PROD_BASE_URL = "http://picture.xucanwei.xyz";
 // 创建 Axios 实例
 const myAxios = axios.create({
-  baseURL: DEV_BASE_URL,
+  baseURL: PROD_BASE_URL,
   timeout: 10000,
   withCredentials: true,
 });
