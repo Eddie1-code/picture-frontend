@@ -5,7 +5,7 @@
       <span v-if="queryAll"> 全部空间 </span>
       <span v-else-if="queryPublic"> 公共图库 </span>
       <span v-else>
-        <a :href="`/space/${spaceId}`" target="_blank">id：{{ spaceId }}</a>
+        <a @click="goToSpaceDetail">id：{{ spaceId }}</a>
       </span>
     </h2>
     <div style="margin-bottom: 16px" />
@@ -45,11 +45,14 @@ import SpaceTagAnalyze from '@/components/analyze/SpaceTagAnalyze.vue'
 import SpaceSizeAnalyze from '@/components/analyze/SpaceSizeAnalyze.vue'
 import SpaceUserAnalyze from '@/components/analyze/SpaceUserAnalyze.vue'
 import SpaceRankAnalyze from '@/components/analyze/SpaceRankAnalyze.vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
+import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 
 const route = useRoute()
+const router = useRouter()
+const { go } = useSafeNavigate(router)
 
 // 空间 id
 const spaceId = computed(() => {
@@ -73,6 +76,13 @@ const loginUser = loginUserStore.loginUser
 const isAdmin = computed(() => {
   return loginUser.userRole === 'admin'
 })
+
+const goToSpaceDetail = () => {
+  if (!spaceId.value) {
+    return
+  }
+  go(`/space/${spaceId.value}`)
+}
 </script>
 
 <style scoped></style>

@@ -63,6 +63,7 @@ import { message } from 'ant-design-vue'
 import { deletePictureUsingPost } from '@/api/pictureController.ts'
 import ShareModal from '@/components/ShareModal.vue'
 import { ref } from 'vue'
+import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 
 interface Props {
   dataList?: API.PictureVO[]
@@ -83,28 +84,21 @@ const props = withDefaults(defineProps<Props>(), {
 
 // 跳转至图片详情
 const router = useRouter()
+const { go } = useSafeNavigate(router)
 const doClickPicture = (picture: API.PictureVO) => {
-  router.push({
-    path: `/picture/${picture.id}`,
-  })
+  go(`/picture/${picture.id}`)
 }
 
 // 搜索
 const doSearch = (picture, e) => {
   e.stopPropagation()
-  window.open(`/search_picture?pictureId=${picture.id}`)
+  go(`/search_picture?pictureId=${picture.id}`)
 }
 
 // 编辑
 const doEdit = (picture, e) => {
   e.stopPropagation()
-  router.push({
-    path: '/add_picture',
-    query: {
-      id: picture.id,
-      spaceId: picture.spaceId,
-    },
-  })
+  go(`/add_picture?id=${picture.id}&spaceId=${picture.spaceId ?? ''}`)
 }
 
 // 删除

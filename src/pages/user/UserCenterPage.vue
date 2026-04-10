@@ -1,6 +1,12 @@
 <template>
   <div class="center-container">
   <a-form layout="horizontal" class="wide-form" :model="form">
+    <a-form-item label="用 户 ID ">
+      <div class="user-id-row">
+        <a-input :value="displayUserId" disabled class="user-id-input" />
+        <a-button :disabled="!displayUserId" @click="copyUserId">复制</a-button>
+      </div>
+    </a-form-item>
     <a-form-item label="用户账号">
       <a-input v-model:value="form.userAccount" disabled />
     </a-form-item>
@@ -46,6 +52,7 @@ import { getLoginUserUsingGet, updateMyProfileUsingPost, uploadAvatarUsingPost }
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts' // 导入登录用户状态管理
 
 const form = ref({
+  id: '',
   userAccount: '',
   userName: '',
   userPassword: '',
@@ -55,11 +62,13 @@ const form = ref({
 
 const passwordVisible = ref(false)
 const loginUserStore = useLoginUserStore() // 初始化登录用户状态管理
+const displayUserId = ref('')
 
 onMounted(async () => {
   const res = await getLoginUserUsingGet()
   if (res.data?.data) {
     Object.assign(form.value, res.data.data)
+    displayUserId.value = String(res.data.data.id ?? '')
     form.value.userPassword = ''
   }
 })
@@ -74,6 +83,7 @@ const doUpdate = async () => {
       const userRes = await getLoginUserUsingGet();
       if (userRes.data?.code === 0 && userRes.data?.data) {
         Object.assign(form.value, userRes.data.data);
+        displayUserId.value = String(userRes.data.data.id ?? '')
         form.value.userPassword = '';
         // 更新全局状态，同步右上角用户信息
         loginUserStore.setLoginUser(userRes.data.data);
@@ -107,6 +117,25 @@ const customRequest = async ({ file, onSuccess }: any) => {
     message.error('上传失败：' + (error instanceof Error ? error.message : '网络错误'))
   }
 }
+
+const copyUserId = async () => {
+  if (!displayUserId.value) {
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(displayUserId.value)
+    message.success('用户ID已复制')
+  } catch (error) {
+    // 兼容非安全上下文，降级复制
+    const textArea = document.createElement('textarea')
+    textArea.value = displayUserId.value
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    message.success('用户ID已复制')
+  }
+}
 </script>
 
 <style scoped>
@@ -124,6 +153,21 @@ const customRequest = async ({ file, onSuccess }: any) => {
   border-radius: 12px;
   box-shadow: 0 2px 12px #0001;
 }
+
+.wide-form :deep(.ant-form-item) {
+  margin-bottom: 20px;
+}
+
+.user-id-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-id-input {
+  width: 240px;
+}
+
 .btn-center {
   display: flex;
   justify-content: center;

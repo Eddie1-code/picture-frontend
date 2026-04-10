@@ -6,8 +6,12 @@ import { getLoginUserUsingGet } from '@/api/userController.ts'
  * 存储登录用户信息的状态
  */
 export const useLoginUserStore = defineStore('loginUser', () => {
-  const loginUser = ref<API.LoginUserVO>({
+  const defaultLoginUser: API.LoginUserVO = {
     userName: '未登录',
+  }
+
+  const loginUser = ref<API.LoginUserVO>({
+    ...defaultLoginUser,
   })
 
   /**
@@ -36,5 +40,12 @@ export const useLoginUserStore = defineStore('loginUser', () => {
     loginUser.value = newLoginUser
   }
 
-  return { loginUser, fetchLoginUser, setLoginUser }
+  /**
+   * 清空登录用户信息（用于退出登录 / token 失效）
+   */
+  function clearLoginUser() {
+    loginUser.value = { ...defaultLoginUser }
+  }
+
+  return { loginUser, fetchLoginUser, setLoginUser, clearLoginUser }
 })

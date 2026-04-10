@@ -13,8 +13,10 @@
           <a-descriptions :column="1">
             <a-descriptions-item label="作者">
               <a-space>
-                <a-avatar :size="24" :src="picture.user?.userAvatar" />
-                <div>{{ picture.user?.userName }}</div>
+                <a-avatar :size="24" :src="picture.user?.userAvatar">
+                  {{ authorDisplayName.slice(0, 1).toUpperCase() }}
+                </a-avatar>
+                <div>{{ authorDisplayName }}</div>
               </a-space>
             </a-descriptions-item>
             <a-descriptions-item label="名称">
@@ -115,6 +117,9 @@ interface Props {
 
 const props = defineProps<Props>()
 const picture = ref<API.PictureVO>({})
+const authorDisplayName = computed(() => {
+  return picture.value.user?.userName || (picture.value.userId ? `用户${picture.value.userId}` : '未知用户')
+})
 
 // 获取图片详情
 const fetchPictureDetail = async () => {

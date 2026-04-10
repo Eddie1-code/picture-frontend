@@ -15,7 +15,19 @@ export default class PictureEditWebSocket {
   connect() {
     const DEV_BASE_URL = "ws://localhost:8123";
     const PROD_BASE_URL = "ws://picture.xucanwei.xyz";
-    const url = `${PROD_BASE_URL}/api/ws/picture/edit?pictureId=${this.pictureId}`
+    const tokenName = sessionStorage.getItem('satoken_tab_token_name') || ''
+    const tokenValue = sessionStorage.getItem('satoken_tab_token') || ''
+    const query = new URLSearchParams({
+      pictureId: String(this.pictureId),
+    })
+    if (tokenName && tokenValue) {
+      // 兼容 Sa-Token 的常规取值方式（token-name 作为参数名）
+      query.set(tokenName, tokenValue)
+      // 同时提供固定参数，便于后端兜底解析
+      query.set('tokenName', tokenName)
+      query.set('tokenValue', tokenValue)
+    }
+    const url = `${DEV_BASE_URL}/api/ws/picture/edit?${query.toString()}`
     this.socket = new WebSocket(url)
 
     // 设置携带 cookie

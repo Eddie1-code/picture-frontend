@@ -3,13 +3,12 @@
     <a-flex justify="space-between">
       <h2>空间管理</h2>
       <a-space>
-        <a-button type="primary" href="/add_space" target="_blank">+ 创建空间</a-button>
+        <a-button type="primary" @click="goToAddSpace">+ 创建空间</a-button>
         <a-button
           type="primary"
           ghost
           :icon="h(BarChartOutlined)"
-          href="/space_analyze?queryPublic=1"
-          target="_blank"
+          @click="goToAnalyzePublic"
         >
           分析公共图库
         </a-button>
@@ -17,12 +16,11 @@
           type="primary"
           ghost
           :icon="h(BarChartOutlined)"
-          href="/space_analyze?queryAll=1"
-          target="_blank"
+          @click="goToAnalyzeAll"
         >
           分析全部空间
         </a-button>
-        <a-button type="primary" href="/add_space/batch" target="_blank" ghost
+        <a-button type="primary" @click="goToAddSpaceBatch" ghost
           >+ 批量创建空间
         </a-button>
       </a-space>
@@ -92,16 +90,14 @@
             <a-button
               type="primary"
               style="display: block; margin-bottom: 8px; width: 80px"
-              :href="`/space_analyze?spaceId=${record.id}`"
-              target="_blank"
+              @click="goToAnalyzeSpace(record.id)"
             >
               分析
             </a-button>
             <a-button
               type="primary"
               ghost
-              :href="`/add_space?id=${record.id}`"
-              target="_blank"
+              @click="goToEditSpace(record.id)"
               style="display: block; margin-bottom: 8px; width: 80px"
               >编辑
             </a-button>
@@ -135,6 +131,11 @@ import {
 } from '@/constants/space.ts'
 import { formatSize } from '@/utils'
 import { BarChartOutlined } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
+import { useSafeNavigate } from '@/utils/safeNavigate.ts'
+
+const router = useRouter()
+const { go } = useSafeNavigate(router)
 
 const columns = [
   {
@@ -240,6 +241,30 @@ const doDelete = async (id: string) => {
   } else {
     message.error('删除失败')
   }
+}
+
+const goToAddSpace = () => {
+  go('/add_space')
+}
+
+const goToAddSpaceBatch = () => {
+  go('/add_space/batch')
+}
+
+const goToAnalyzePublic = () => {
+  go('/space_analyze?queryPublic=1')
+}
+
+const goToAnalyzeAll = () => {
+  go('/space_analyze?queryAll=1')
+}
+
+const goToAnalyzeSpace = (id: string) => {
+  go(`/space_analyze?spaceId=${id}`)
+}
+
+const goToEditSpace = (id: string) => {
+  go(`/add_space?id=${id}`)
 }
 
 // 页面加载时，请求一次

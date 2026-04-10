@@ -7,8 +7,7 @@
         <a-button
           v-if="canUploadPicture"
           type="primary"
-          :href="`/add_picture?spaceId=${id}`"
-          target="_blank"
+          @click="goToAddPicture"
         >
           + 创建图片
         </a-button>
@@ -17,8 +16,7 @@
           type="primary"
           ghost
           :icon="h(TeamOutlined)"
-          :href="`/spaceUserManage/${id}`"
-          target="_blank"
+          @click="goToSpaceUserManage"
         >
           成员管理
         </a-button>
@@ -27,8 +25,7 @@
           type="primary"
           ghost
           :icon="h(BarChartOutlined)"
-          :href="`/space_analyze?spaceId=${id}`"
-          target="_blank"
+          @click="goToSpaceAnalyze"
         >
           空间分析
         </a-button>
@@ -87,6 +84,7 @@ import { computed, h, onMounted, ref, watch } from 'vue'
 import { getSpaceVoByIdUsingGet } from '@/api/spaceController.ts'
 import { message } from 'ant-design-vue'
 import {
+  getPictureVoByIdUsingGet,
   listPictureVoByPageUsingPost,
   searchPictureByColorUsingPost,
 } from '@/api/pictureController.ts'
@@ -98,12 +96,17 @@ import 'vue3-colorpicker/style.css'
 import BatchEditPictureModal from '@/components/BatchEditPictureModal.vue'
 import { BarChartOutlined, EditOutlined, TeamOutlined } from '@ant-design/icons-vue'
 import { SPACE_PERMISSION_ENUM, SPACE_TYPE_MAP } from '../constants/space.ts'
+import { useRoute, useRouter } from 'vue-router'
+import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 
 interface Props {
   id: string | number
 }
 
 const props = defineProps<Props>()
+const route = useRoute()
+const router = useRouter()
+const { go } = useSafeNavigate(router)
 const space = ref<API.SpaceVO>({})
 
 // 定义变量
@@ -194,6 +197,35 @@ const fetchData = async () => {
 onMounted(() => {
   fetchData()
 })
+
+// 创建成功后回跳本页时，按 createdPictureId 将新图插到列表顶部（避免用户手动刷新）
+const tryInsertCreatedPicture = async () => {
+  const createdPictureId = route.query?.createdPictureId
+  if (!createdPictureId) {
+    return
+  }
+  const res = await getPictureVoByIdUsingGet({
+    id: createdPictureId as any,
+  })
+  if (res.data.code !== 0 || !res.data.data) {
+    return
+  }
+  const createdPicture = res.data.data
+  const exists = dataList.value.some((item) => item.id === createdPicture.id)
+  if (exists) {
+    return
+  }
+  dataList.value.unshift(createdPicture)
+  total.value += 1
+  const pageSize = Number(searchParams.value.pageSize ?? 12)
+  if (dataList.value.length > pageSize) {
+    dataList.value = dataList.value.slice(0, pageSize)
+  }
+}
+
+onMounted(() => {
+  tryInsertCreatedPicture()
+})
 // endregion
 
 // 按照颜色搜索
@@ -227,12 +259,32 @@ const doBatchEdit = () => {
   }
 }
 
+// 使用同标签页跳转，避免 sessionStorage 隔离导致新标签页丢失 token
+const goToSpaceUserManage = () => {
+  go(`/spaceUserManage/${props.id}`)
+}
+
+const goToSpaceAnalyze = () => {
+  go(`/space_analyze?spaceId=${props.id}`)
+}
+
+const goToAddPicture = () => {
+  go(`/add_picture?spaceId=${props.id}`)
+}
+
 // 空间 id 改变时，重新获取空间详情和图片列表
 watch(
   () => props.id,
   (newSpaceId) => {
     fetchSpaceDetail()
     fetchData()
+  },
+)
+
+watch(
+  () => route.query?.createdPictureId,
+  () => {
+    tryInsertCreatedPicture()
   },
 )
 </script>

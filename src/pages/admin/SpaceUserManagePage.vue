@@ -3,13 +3,12 @@
     <a-flex justify="space-between">
       <h2>空间成员管理</h2>
       <a-space>
-        <a-button type="primary" href="/add_space" target="_blank">+ 创建空间</a-button>
+        <a-button type="primary" @click="goToAddSpace">+ 创建空间</a-button>
         <a-button
           type="primary"
           ghost
           :icon="h(BarChartOutlined)"
-          href="/space_analyze?queryPublic=1"
-          target="_blank"
+          @click="goToAnalyzePublic"
         >
           分析公共图库
         </a-button>
@@ -17,12 +16,11 @@
           type="primary"
           ghost
           :icon="h(BarChartOutlined)"
-          href="/space_analyze?queryAll=1"
-          target="_blank"
+          @click="goToAnalyzeAll"
         >
           分析全部空间
         </a-button>
-        <a-button type="primary" href="/add_space/batch" target="_blank" ghost
+        <a-button type="primary" @click="goToAddSpaceBatch" ghost
           >+ 批量创建空间
         </a-button>
       </a-space>
@@ -74,6 +72,8 @@ import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { SPACE_ROLE_OPTIONS } from '../../constants/space.ts'
 import { BarChartOutlined } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
+import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 import {
   addSpaceUserUsingPost,
   deleteSpaceUserUsingPost,
@@ -110,6 +110,8 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const router = useRouter()
+const { go } = useSafeNavigate(router)
 
 // 获取数据
 const fetchData = async () => {
@@ -179,6 +181,22 @@ const editSpaceRole = async (value, record) => {
   } else {
     message.error('修改失败，' + res.data.message)
   }
+}
+
+const goToAddSpace = () => {
+  go('/add_space')
+}
+
+const goToAddSpaceBatch = () => {
+  go('/add_space/batch')
+}
+
+const goToAnalyzePublic = () => {
+  go('/space_analyze?queryPublic=1')
+}
+
+const goToAnalyzeAll = () => {
+  go('/space_analyze?queryAll=1')
 }
 </script>
 

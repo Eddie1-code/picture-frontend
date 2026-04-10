@@ -4,7 +4,7 @@
       {{ route.query?.id ? '修改图片' : '创建图片' }}
     </h2>
     <a-typography-paragraph v-if="spaceId" type="secondary">
-      保存至空间：<a :href="`/space/${spaceId}`" target="_blank">{{ spaceId }}</a>
+      保存至空间：<a @click="goToSpaceDetail">{{ spaceId }}</a>
     </a-typography-paragraph>
 
     <!-- 选择上传方式 -->
@@ -94,6 +94,7 @@ import ImageCropper from '@/components/ImageCropper.vue'
 import { EditOutlined, FullscreenOutlined } from '@ant-design/icons-vue'
 import ImageOutPainting from '@/components/ImageOutPainting.vue'
 import { getSpaceVoByIdUsingGet } from '@/api/spaceController.ts'
+import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 
 const picture = ref<API.PictureVO>()
 const pictureForm = reactive<API.PictureEditRequest>({})
@@ -106,6 +107,7 @@ const spaceId = computed(() => {
 })
 
 const router = useRouter()
+const { go } = useSafeNavigate(router)
 
 const onSuccess = (newPicture: API.PictureVO) => {
   // Handle the success of picture upload
@@ -123,19 +125,23 @@ const handleSubmit = async (values: any) => {
   if (!pictureId) {
     return
   }
+  const isEditMode = !!route.query?.id
   const res = await editPictureUsingPost({
     id: pictureId,
     spaceId: spaceId.value,
     ...values,
   })
   if (res.data.code === 0 && res.data.data) {
-    message.success('创建成功')
-    // 跳转到图片详情页
-    router.push({
-      path: `/picture/${pictureId}`,
-    })
+    message.success(isEditMode ? '更新成功' : '创建成功')
+    // 在空间内创建成功后，回到空间页并带上新图片 id，空间页可直接插入展示
+    if (spaceId.value && !isEditMode) {
+      go(`/space/${spaceId.value}?createdPictureId=${pictureId}`)
+      return
+    }
+    // 其他场景仍跳转到图片详情页
+    go(`/picture/${pictureId}`)
   } else {
-    message.error('创建失败，' + res.data.message)
+    message.error((isEditMode ? '更新失败，' : '创建失败，') + res.data.message)
   }
 }
 
@@ -248,6 +254,13 @@ const fetchSpace = async () => {
 watchEffect(() => {
   fetchSpace()
 })
+
+const goToSpaceDetail = () => {
+  if (!spaceId.value) {
+    return
+  }
+  go(`/space/${spaceId.value}`)
+}
 </script>
 
 <style scoped>
