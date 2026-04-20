@@ -21,7 +21,7 @@ import { toggleFollowUsingPost } from '@/api/social.ts'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 
 const props = defineProps<{
-  targetUserId: number
+  targetUserId: number | string
   modelValue?: boolean
   isMutual?: boolean
   size?: 'small' | 'middle' | 'large'

@@ -155,6 +155,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponsePageLikeVO_ = {
+    code?: number
+    data?: PageLikeVO_
+    message?: string
+  }
+
   type BaseResponsePagePicture_ = {
     code?: number
     data?: PagePicture_
@@ -164,6 +170,12 @@ declare namespace API {
   type BaseResponsePagePictureVO_ = {
     code?: number
     data?: PagePictureVO_
+    message?: string
+  }
+
+  type BaseResponsePagePostVO_ = {
+    code?: number
+    data?: PagePostVO_
     message?: string
   }
 
@@ -200,6 +212,12 @@ declare namespace API {
   type BaseResponsePictureVO_ = {
     code?: number
     data?: PictureVO
+    message?: string
+  }
+
+  type BaseResponsePostVO_ = {
+    code?: number
+    data?: PostVO
     message?: string
   }
 
@@ -359,12 +377,14 @@ declare namespace API {
     sortField?: string
     sortOrder?: string
     targetType?: number
+    userId?: number
   }
 
   type FavoriteVO = {
     favoriteRecordId?: number
     favoriteTime?: string
     picture?: PictureVO
+    post?: PostVO
     space?: SpaceVO
     targetId?: number
     targetType?: number
@@ -424,6 +444,11 @@ declare namespace API {
     id?: number
   }
 
+  type getVOUsingGETParams = {
+    /** id */
+    id: number
+  }
+
   type ImageSearchResult = {
     http?: string
     https?: string
@@ -465,6 +490,24 @@ declare namespace API {
   }
 
   type LikeActionRequest = {
+    targetId?: number
+    targetType?: number
+  }
+
+  type LikeQueryRequest = {
+    current?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    targetType?: number
+    userId?: number
+  }
+
+  type LikeVO = {
+    likeRecordId?: number
+    likeTime?: string
+    picture?: PictureVO
+    post?: PostVO
     targetId?: number
     targetType?: number
   }
@@ -567,6 +610,14 @@ declare namespace API {
     total?: number
   }
 
+  type PageLikeVO_ = {
+    current?: number
+    pages?: number
+    records?: LikeVO[]
+    size?: number
+    total?: number
+  }
+
   type PagePicture_ = {
     current?: number
     pages?: number
@@ -579,6 +630,14 @@ declare namespace API {
     current?: number
     pages?: number
     records?: PictureVO[]
+    size?: number
+    total?: number
+  }
+
+  type PagePostVO_ = {
+    current?: number
+    pages?: number
+    records?: PostVO[]
     size?: number
     total?: number
   }
@@ -781,6 +840,69 @@ declare namespace API {
     user?: UserVO
     userId?: number
     viewCount?: number
+  }
+
+  type PostAddRequest = {
+    allowCollect?: number
+    allowComment?: number
+    allowLike?: number
+    clientReqId?: string
+    content?: string
+    imageUrls?: string[]
+    location?: string
+    tags?: string[]
+    visibility?: number
+  }
+
+  type PostEditRequest = {
+    allowCollect?: number
+    allowComment?: number
+    allowLike?: number
+    content?: string
+    id?: number
+    imageUrls?: string[]
+    location?: string
+    tags?: string[]
+    visibility?: number
+  }
+
+  type PostQueryRequest = {
+    current?: number
+    orderBy?: string
+    pageSize?: number
+    reviewStatus?: number
+    searchText?: string
+    sortField?: string
+    sortOrder?: string
+    tag?: string
+    userId?: number
+  }
+
+  type PostVO = {
+    allowCollect?: number
+    allowComment?: number
+    allowLike?: number
+    commentCount?: number
+    content?: string
+    createTime?: string
+    favoriteCount?: number
+    hotScore?: number
+    id?: number
+    imageUrls?: string[]
+    isFavorite?: boolean
+    isFollowingAuthor?: boolean
+    isLiked?: boolean
+    likeCount?: number
+    location?: string
+    reviewStatus?: number
+    shareCount?: number
+    status?: number
+    tags?: string[]
+    updateTime?: string
+    user?: UserVO
+    userId?: number
+    viewCount?: number
+    visibility?: number
   }
 
   type readAllUsingPOSTParams = {
@@ -1012,7 +1134,9 @@ declare namespace API {
     lastActiveTime?: string
     personalSign?: string
     showFansList?: number
+    showFavoriteList?: number
     showFollowList?: number
+    showLikeList?: number
     updateTime?: string
     userAccount?: string
     userAvatar?: string
@@ -1050,6 +1174,15 @@ declare namespace API {
     userPassword?: string
   }
 
+  type UserPrivacyUpdateRequest = {
+    allowFollow?: number
+    allowPrivateChat?: number
+    showFansList?: number
+    showFavoriteList?: number
+    showFollowList?: number
+    showLikeList?: number
+  }
+
   type UserQueryRequest = {
     current?: number
     id?: number
@@ -1081,6 +1214,8 @@ declare namespace API {
   }
 
   type UserVO = {
+    allowFollow?: number
+    allowPrivateChat?: number
     createTime?: string
     fansCount?: number
     followCount?: number
@@ -1088,6 +1223,10 @@ declare namespace API {
     isFollowed?: boolean
     isMutualFollow?: boolean
     personalSign?: string
+    showFansList?: number
+    showFavoriteList?: number
+    showFollowList?: number
+    showLikeList?: number
     updateTime?: string
     userAccount?: string
     userAvatar?: string

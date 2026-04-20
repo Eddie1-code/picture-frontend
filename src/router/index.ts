@@ -21,6 +21,9 @@ import SpaceUserManagePage from '@/pages/admin/SpaceUserManagePage.vue'
 import UserExchangeVipPage from '@/pages/UserExchangeVipPage.vue'
 import ChatPage from '@/pages/ChatPage.vue'
 import AboutUsPage from '@/pages/AboutUsPage.vue'
+import ForumPage from '@/pages/ForumPage.vue'
+import PostDetailPage from '@/pages/PostDetailPage.vue'
+import PostAddPage from '@/pages/PostAddPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -138,6 +141,22 @@ const router = createRouter({
       path: '/picture/:id',
       name: '图片详情',
       component: PictureDetailPage,
+      props: true,
+    },
+    {
+      path: '/forum',
+      name: '社区论坛',
+      component: ForumPage,
+    },
+    {
+      path: '/post/add',
+      name: '发布动态',
+      component: PostAddPage,
+    },
+    {
+      path: '/post/:id',
+      name: '动态详情',
+      component: PostDetailPage,
       props: true,
     },
     {

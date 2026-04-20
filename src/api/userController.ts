@@ -82,6 +82,14 @@ export async function getUserVoByIdUsingGet(
   })
 }
 
+/** heartbeat POST /api/user/heartbeat */
+export async function heartbeatUsingPost(options?: { [key: string]: any }) {
+  return request<API.BaseResponseBoolean_>('/api/user/heartbeat', {
+    method: 'POST',
+    ...(options || {}),
+  })
+}
+
 /** listUserVOByPage POST /api/user/list/page/vo */
 export async function listUserVoByPageUsingPost(
   body: API.UserQueryRequest,
@@ -116,6 +124,29 @@ export async function userLoginUsingPost(
 export async function userLogoutUsingPost(options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean_>('/api/user/logout', {
     method: 'POST',
+    ...(options || {}),
+  })
+}
+
+/** getMyPrivacy GET /api/user/privacy/my */
+export async function getMyPrivacyUsingGet(options?: { [key: string]: any }) {
+  return request<API.BaseResponseUserVO_>('/api/user/privacy/my', {
+    method: 'GET',
+    ...(options || {}),
+  })
+}
+
+/** updateMyPrivacy POST /api/user/privacy/update */
+export async function updateMyPrivacyUsingPost(
+  body: API.UserPrivacyUpdateRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseUserVO_>('/api/user/privacy/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
     ...(options || {}),
   })
 }

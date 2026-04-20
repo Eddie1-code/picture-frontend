@@ -21,12 +21,40 @@
         <aside class="picture-detail-aside">
           <div class="picture-detail-aside-top">
             <div class="picture-detail-author">
-              <a-avatar :size="40" :src="picture.user?.userAvatar">
-                {{ authorDisplayName.slice(0, 1).toUpperCase() }}
-              </a-avatar>
-              <div class="picture-detail-author-text">
-                <span class="picture-detail-author-label">作者</span>
-                <span class="picture-detail-author-name">{{ authorDisplayName }}</span>
+              <div
+                class="picture-detail-author-main"
+                role="link"
+                tabindex="0"
+                :title="'查看 ' + authorDisplayName + ' 的主页'"
+                @click="goAuthorProfile"
+                @keydown.enter="goAuthorProfile"
+              >
+                <a-avatar :size="40" :src="picture.user?.userAvatar">
+                  {{ authorDisplayName.slice(0, 1).toUpperCase() }}
+                </a-avatar>
+                <div class="picture-detail-author-text">
+                  <span class="picture-detail-author-label">作者</span>
+                  <span class="picture-detail-author-name">{{ authorDisplayName }}</span>
+                </div>
+              </div>
+              <div v-if="showAuthorActions" class="picture-detail-author-actions">
+                <FollowButton
+                  :target-user-id="Number(picture.userId)"
+                  v-model="authorFollowed"
+                  :is-mutual="authorMutual"
+                  size="small"
+                  @change="onAuthorFollowChange"
+                />
+                <a-tooltip :title="'给 ' + authorDisplayName + ' 发私信'">
+                  <button
+                    type="button"
+                    class="picture-detail-chat-btn"
+                    @click="goAuthorChat"
+                    aria-label="发私信"
+                  >
+                    <MessageOutlined />
+                  </button>
+                </a-tooltip>
               </div>
             </div>
             <div v-if="(picture.tags ?? []).length" class="picture-detail-tag-row">
@@ -131,13 +159,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { deletePictureUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController.ts'
+import { getFollowStatUsingGet } from '@/api/social.ts'
 import { Modal, message } from 'ant-design-vue'
 import {
   EditOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  MessageOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
@@ -145,7 +175,9 @@ import { downloadImage, formatSize, toHexColor } from '@/utils'
 import ShareModal from '@/components/ShareModal.vue'
 import PictureActionBar from '@/components/PictureActionBar.vue'
 import CommentSection from '@/components/CommentSection.vue'
+import FollowButton from '@/components/FollowButton.vue'
 import { SPACE_PERMISSION_ENUM } from '@/constants/space.ts'
+import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 
 interface Props {
   id: string | number
@@ -157,9 +189,52 @@ const liked = ref(false)
 const favorite = ref(false)
 const likeCount = ref(0)
 const favoriteCount = ref(0)
+const loginUserStore = useLoginUserStore()
 const authorDisplayName = computed(() => {
   return picture.value.user?.userName || (picture.value.userId ? `用户${picture.value.userId}` : '未知用户')
 })
+
+const authorFollowed = ref(false)
+const authorMutual = ref(false)
+
+const showAuthorActions = computed(() => {
+  const me = loginUserStore.loginUser?.id
+  const authorId = picture.value.userId
+  return !!(me && authorId && Number(me) !== Number(authorId))
+})
+
+async function fetchAuthorFollowStat() {
+  const authorId = picture.value.userId
+  if (!authorId || !loginUserStore.loginUser?.id) return
+  if (String(loginUserStore.loginUser.id) === String(authorId)) return
+  try {
+    const res = await getFollowStatUsingGet({ userId: authorId as unknown as number })
+    if (res.data.code === 0 && res.data.data) {
+      authorFollowed.value = !!res.data.data.isFollowed
+      authorMutual.value = !!res.data.data.isMutualFollow
+    }
+  } catch {
+    /* 静默失败，按未关注处理 */
+  }
+}
+
+watch(() => picture.value.userId, (v) => {
+  if (v) fetchAuthorFollowStat()
+})
+
+function goAuthorProfile() {
+  if (!picture.value.userId) return
+  router.push(`/user/profile/${picture.value.userId}`)
+}
+
+function goAuthorChat() {
+  if (!picture.value.userId) return
+  router.push(`/chat?targetUserId=${picture.value.userId}`)
+}
+
+function onAuthorFollowChange(_v: boolean) {
+  // 只改本地状态，无需额外动作
+}
 
 // 获取图片详情
 const fetchPictureDetail = async () => {
@@ -370,7 +445,65 @@ const doShare = () => {
 .picture-detail-author {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.picture-detail-author-main {
+  display: flex;
+  align-items: center;
   gap: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+  border-radius: var(--ds-radius-sm);
+  padding: 6px 8px;
+  margin: -6px -8px;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.picture-detail-author-main:hover,
+.picture-detail-author-main:focus-visible {
+  background: rgba(139, 115, 85, 0.06);
+  outline: none;
+}
+
+.picture-detail-author-main:hover .picture-detail-author-name {
+  color: var(--ds-accent-deep);
+}
+
+.picture-detail-author-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.picture-detail-chat-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--ds-border-subtle);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ds-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.picture-detail-chat-btn:hover {
+  color: var(--ds-accent-deep);
+  border-color: var(--ds-accent-soft);
+  background: var(--ds-accent-soft);
+  transform: translateY(-1px);
 }
 
 .picture-detail-author-text {

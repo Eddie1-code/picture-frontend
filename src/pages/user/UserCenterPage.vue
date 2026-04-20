@@ -6,28 +6,6 @@
       <p class="ds-page-lead">编辑展示信息与安全设置，头像与昵称将同步到导航与图库展示。</p>
     </header>
 
-    <div v-if="myStat" class="my-social-strip">
-      <button type="button" class="ms-cell" @click="openList('following')">
-        <span class="ms-num">{{ myStat.followCount ?? 0 }}</span>
-        <span class="ms-lb">关注</span>
-      </button>
-      <div class="ms-divider" />
-      <button type="button" class="ms-cell" @click="openList('fans')">
-        <span class="ms-num">{{ myStat.fansCount ?? 0 }}</span>
-        <span class="ms-lb">粉丝</span>
-      </button>
-      <a-button class="ms-link" type="link" @click="goMyProfile">查看我的主页</a-button>
-    </div>
-
-    <FollowListDialog
-      v-if="loginUserStore.loginUser.id"
-      v-model:open="listDialogOpen"
-      :user-id="Number(loginUserStore.loginUser.id)"
-      :initial-type="listDialogType"
-      :follow-count="myStat?.followCount ?? 0"
-      :fans-count="myStat?.fansCount ?? 0"
-    />
-
     <div class="profile-shell ds-texture-panel">
       <div class="profile-grid">
         <aside class="profile-aside">
@@ -99,6 +77,27 @@
       </div>
     </div>
 
+    <!-- 隐私设置 -->
+    <section class="privacy-shell ds-texture-panel">
+      <header class="privacy-head">
+        <h2 class="privacy-title">隐私设置</h2>
+        <p class="privacy-desc">控制其他用户在你的主页上能看到什么、能否联系到你。</p>
+      </header>
+      <div class="privacy-grid">
+        <div class="privacy-item" v-for="row in privacyRows" :key="row.key">
+          <div class="privacy-item-text">
+            <div class="privacy-item-title">{{ row.title }}</div>
+            <div class="privacy-item-sub">{{ row.desc }}</div>
+          </div>
+          <a-switch
+            :checked="privacy[row.key] === 1"
+            :loading="privacySaving[row.key]"
+            @change="(v: boolean) => togglePrivacy(row.key, v)"
+          />
+        </div>
+      </div>
+    </section>
+
     <AvatarCropperModal ref="avatarCropperRef" @success="onAvatarCropSuccess" />
   </div>
 </template>
@@ -107,12 +106,79 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue'
-import { useRouter } from 'vue-router'
 import AvatarCropperModal from '@/components/AvatarCropperModal.vue'
-import FollowListDialog from '@/components/FollowListDialog.vue'
 import { getLoginUserUsingGet, updateMyProfileUsingPost } from '@/api/userController'
-import { getFollowStatUsingGet } from '@/api/social.ts'
+import { getMyPrivacyUsingGet, updateMyPrivacyUsingPost } from '@/api/privacy.ts'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
+
+type PrivacyKey =
+  | 'allowPrivateChat'
+  | 'allowFollow'
+  | 'showFollowList'
+  | 'showFansList'
+  | 'showLikeList'
+  | 'showFavoriteList'
+
+const privacyRows: Array<{ key: PrivacyKey; title: string; desc: string }> = [
+  { key: 'allowPrivateChat', title: '允许私信', desc: '关闭后，其他用户无法主动向你发起私信会话。' },
+  { key: 'allowFollow', title: '允许被关注', desc: '关闭后，新的关注请求会被直接拒绝。' },
+  { key: 'showFollowList', title: '公开关注列表', desc: '关闭后，其他用户在你的主页看不到你关注了谁。' },
+  { key: 'showFansList', title: '公开粉丝列表', desc: '关闭后，其他用户在你的主页看不到关注你的人。' },
+  { key: 'showLikeList', title: '公开喜欢内容', desc: '关闭后，他人访问你的主页无法看到「喜欢」Tab。' },
+  { key: 'showFavoriteList', title: '公开收藏内容', desc: '关闭后，他人访问你的主页无法看到「收藏」Tab。' },
+]
+
+const privacy = ref<Record<PrivacyKey, number>>({
+  allowPrivateChat: 1,
+  allowFollow: 1,
+  showFollowList: 1,
+  showFansList: 1,
+  showLikeList: 1,
+  showFavoriteList: 1,
+})
+const privacySaving = ref<Record<PrivacyKey, boolean>>({
+  allowPrivateChat: false,
+  allowFollow: false,
+  showFollowList: false,
+  showFansList: false,
+  showLikeList: false,
+  showFavoriteList: false,
+})
+
+async function fetchPrivacy() {
+  try {
+    const res = await getMyPrivacyUsingGet()
+    if (res.data?.code === 0 && res.data.data) {
+      const d: any = res.data.data
+      ;(Object.keys(privacy.value) as PrivacyKey[]).forEach((k) => {
+        if (d[k] !== undefined && d[k] !== null) privacy.value[k] = Number(d[k]) ? 1 : 0
+      })
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+async function togglePrivacy(key: PrivacyKey, v: boolean) {
+  privacySaving.value[key] = true
+  const prev = privacy.value[key]
+  const next = v ? 1 : 0
+  privacy.value[key] = next
+  try {
+    const body: Record<string, number> = {}
+    body[key] = next
+    const res = await updateMyPrivacyUsingPost(body as any)
+    if (res.data?.code !== 0) {
+      throw new Error(res.data?.message || '保存失败')
+    }
+    message.success('已保存')
+  } catch (e: any) {
+    privacy.value[key] = prev
+    message.error('保存失败：' + (e?.message ?? '未知错误'))
+  } finally {
+    privacySaving.value[key] = false
+  }
+}
 
 /** 与库表 `user.userProfile` varchar(512) 一致 */
 const profileMaxLen = 512
@@ -146,31 +212,6 @@ onBeforeUnmount(() => {
   resetLocalAvatarPreview()
 })
 
-const router = useRouter()
-const myStat = ref<{ followCount?: number; fansCount?: number } | null>(null)
-const listDialogOpen = ref(false)
-const listDialogType = ref<'following' | 'fans'>('following')
-
-async function fetchMyStat(uid: number) {
-  try {
-    const r = await getFollowStatUsingGet({ userId: uid })
-    if (r.data.code === 0 && r.data.data) myStat.value = r.data.data
-  } catch {
-    /* ignore */
-  }
-}
-
-function openList(t: 'following' | 'fans') {
-  listDialogType.value = t
-  listDialogOpen.value = true
-}
-
-function goMyProfile() {
-  if (loginUserStore.loginUser.id) {
-    router.push(`/user/profile/${loginUserStore.loginUser.id}`)
-  }
-}
-
 onMounted(async () => {
   const res = await getLoginUserUsingGet()
   if (res.data?.data) {
@@ -178,8 +219,8 @@ onMounted(async () => {
     displayUserId.value = String(res.data.data.id ?? '')
     form.value.userPassword = ''
     pendingAvatarUrl.value = ''
-    if (res.data.data.id) fetchMyStat(Number(res.data.data.id))
   }
+  fetchPrivacy()
 })
 
 const doUpdate = async () => {
@@ -427,42 +468,56 @@ const copyUserId = async () => {
   border-radius: var(--ds-radius-md);
 }
 
-.my-social-strip {
+/* ===== 隐私设置 ===== */
+.privacy-shell {
+  margin-top: 28px;
+  padding: 26px 32px 30px;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-border-subtle);
+  background: var(--ds-surface-elevated, #fff);
+  box-shadow: var(--ds-shadow-soft, 0 8px 24px rgba(0, 0, 0, 0.04));
+}
+.privacy-head {
+  margin-bottom: 18px;
+}
+.privacy-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+}
+.privacy-desc {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--ds-text-muted);
+}
+.privacy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px 24px;
+}
+.privacy-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  margin-bottom: 18px;
-  background: rgba(255, 255, 255, 0.55);
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--ds-radius-md);
   border: 1px solid var(--ds-border-subtle);
-  border-radius: var(--ds-radius-lg);
+  background: rgba(255, 255, 255, 0.5);
 }
-.ms-cell {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0 8px;
+.privacy-item-text {
+  flex: 1;
+  min-width: 0;
 }
-.ms-num {
-  font-size: 17px;
-  font-weight: 700;
+.privacy-item-title {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--ds-text-primary);
-  line-height: 1.1;
 }
-.ms-lb {
+.privacy-item-sub {
   font-size: 12px;
   color: var(--ds-text-muted);
-  margin-top: 2px;
-}
-.ms-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--ds-border-subtle);
-}
-.ms-link {
-  margin-left: auto;
+  margin-top: 4px;
+  line-height: 1.5;
 }
 </style>

@@ -70,7 +70,17 @@
                         :size="16"
                       />
                     </div>
-                    <span class="dropdown-account">@{{ loginUserStore.loginUser.userAccount || 'user' }}</span>
+                    <div class="dropdown-stats">
+                      <button type="button" class="dd-stat" @click="goStatPage('following')">
+                        <span class="dd-stat-num">{{ followCount }}</span>
+                        <span class="dd-stat-lb">关注</span>
+                      </button>
+                      <span class="dd-stat-divider" />
+                      <button type="button" class="dd-stat" @click="goStatPage('fans')">
+                        <span class="dd-stat-num">{{ fansCount }}</span>
+                        <span class="dd-stat-lb">粉丝</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -103,7 +113,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, h, ref } from 'vue'
+import { computed, h, ref, watch } from 'vue'
 import {
   UserOutlined,
   HomeOutlined,
@@ -115,6 +125,7 @@ import { type MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import { userLogoutUsingPost } from '@/api/userController.ts'
+import { getFollowStatUsingGet } from '@/api/social.ts'
 import MessageCenterPopover from '@/components/MessageCenterPopover.vue'
 import ChatEntry from '@/components/ChatEntry.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
@@ -131,6 +142,11 @@ const originItems = [
     icon: () => h(HomeOutlined),
     label: '主页',
     title: '主页',
+  },
+  {
+    key: '/forum',
+    label: '社区',
+    title: '社区',
   },
   {
     key: '/user_exchange_vip',
@@ -172,6 +188,41 @@ const onMenuClick = ({ key }: { key: string }) => {
   })
 }
 
+const followCount = ref(0)
+const fansCount = ref(0)
+
+async function fetchFollowStat() {
+  const uid = loginUserStore.loginUser?.id
+  if (!uid) {
+    followCount.value = 0
+    fansCount.value = 0
+    return
+  }
+  try {
+    const r = await getFollowStatUsingGet({ userId: uid as unknown as number })
+    if (r.data.code === 0 && r.data.data) {
+      followCount.value = r.data.data.followCount ?? 0
+      fansCount.value = r.data.data.fansCount ?? 0
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+watch(
+  () => loginUserStore.loginUser?.id,
+  (id) => {
+    if (id) fetchFollowStat()
+  },
+  { immediate: true },
+)
+
+const goStatPage = (tab: 'following' | 'fans') => {
+  const uid = loginUserStore.loginUser?.id
+  if (!uid) return
+  router.push({ path: `/user/profile/${uid}`, query: { tab } })
+}
+
 const goUserCenter = () => {
   router.push('/user/center')
 }
@@ -200,7 +251,7 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
   return menus?.filter((menu) => {
     const key = menu?.key as string | undefined
     if (!loginUserStore.loginUser?.id) {
-      return key === '/' || key === '/about_us'
+      return key === '/' || key === '/about_us' || key === '/forum'
     }
     if (key?.startsWith('/admin')) {
       const loginUser = loginUserStore.loginUser
@@ -537,9 +588,10 @@ router.afterEach((to) => {
 
 .dropdown-meta {
   min-width: 0;
-  max-width: 152px;
+  max-width: 200px;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .dropdown-name-row {
@@ -562,12 +614,41 @@ router.afterEach((to) => {
   vertical-align: middle;
 }
 
-.dropdown-account {
-  font-size: 12px;
+.dropdown-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+.dd-stat {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  cursor: pointer;
   color: var(--ds-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+.dd-stat:hover {
+  color: var(--ds-text-primary);
+}
+.dd-stat-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ds-text-primary);
+}
+.dd-stat-lb {
+  font-size: 12px;
+  color: inherit;
+}
+.dd-stat-divider {
+  width: 1px;
+  height: 10px;
+  background: var(--ds-border-subtle);
 }
 
 .dropdown-actions {

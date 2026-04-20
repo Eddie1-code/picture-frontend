@@ -10,6 +10,7 @@ import * as mainController from './mainController'
 import * as likeRecordController from './likeRecordController'
 import * as notifyController from './notifyController'
 import * as pictureController from './pictureController'
+import * as postController from './postController'
 import * as spaceController from './spaceController'
 import * as spaceAnalyzeController from './spaceAnalyzeController'
 import * as spaceUserController from './spaceUserController'
@@ -24,6 +25,7 @@ export default {
   likeRecordController,
   notifyController,
   pictureController,
+  postController,
   spaceController,
   spaceAnalyzeController,
   spaceUserController,

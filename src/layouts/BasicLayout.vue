@@ -29,12 +29,38 @@
         </a>
       </a-layout-footer>
     </a-layout>
+    <GlobalFab />
   </div>
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
 import GlobalHeader from '@/components/GlobalHeader.vue'
 import GlobalSider from '@/components/GlobalSider.vue'
+import GlobalFab from '@/components/GlobalFab.vue'
+import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
+import request from '@/request.ts'
+
+const loginUserStore = useLoginUserStore()
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+
+function doHeartbeat() {
+  if (!loginUserStore.loginUser?.id) return
+  request({ url: '/api/user/heartbeat', method: 'POST' }).catch(() => {})
+}
+
+onMounted(() => {
+  // 进入即上报一次；60s 刷一次 TTL，后端 TTL 120s，保证掉线能在 2 分钟内感知
+  doHeartbeat()
+  heartbeatTimer = setInterval(doHeartbeat, 60_000)
+})
+
+onBeforeUnmount(() => {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer)
+    heartbeatTimer = null
+  }
+})
 </script>
 
 <style scoped>

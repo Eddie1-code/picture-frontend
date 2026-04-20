@@ -14,13 +14,40 @@
       </a-avatar>
       <div class="comment-composer-main">
         <a-textarea
+          ref="composerInputRef"
           v-model:value="composerText"
           :auto-size="{ minRows: 2, maxRows: 6 }"
           :maxlength="1000"
           :placeholder="composerPlaceholder"
           class="comment-composer-input"
+          @select="onComposerSelectionChange"
+          @click="onComposerSelectionChange"
+          @keyup="onComposerSelectionChange"
         />
         <div class="comment-composer-actions">
+          <a-popover
+            v-model:open="emojiOpen"
+            trigger="click"
+            placement="topLeft"
+            :overlay-class-name="'comment-emoji-popover'"
+          >
+            <template #content>
+              <div class="comment-emoji-grid">
+                <button
+                  v-for="e in emojiList"
+                  :key="e"
+                  type="button"
+                  class="comment-emoji-cell"
+                  @click="insertEmoji(e)"
+                >
+                  {{ e }}
+                </button>
+              </div>
+            </template>
+            <button type="button" class="comment-emoji-trigger" title="插入表情">
+              <SmileOutlined />
+            </button>
+          </a-popover>
           <span v-if="replyCtx" class="comment-reply-hint">
             回复 @{{ replyCtx.replyUserName }}
             <a class="comment-reply-cancel" @click="clearReply">取消</a>
@@ -63,8 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { message, Modal } from 'ant-design-vue'
+import { SmileOutlined } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import {
@@ -77,7 +105,7 @@ import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import CommentItem from './CommentItem.vue'
 
 interface Props {
-  targetId: number | undefined
+  targetId: number | string | undefined
   targetType: number
   allowComment?: number
 }
@@ -99,6 +127,53 @@ const hasMore = computed(() => comments.value.length < total.value)
 
 const composerText = ref('')
 const submitting = ref(false)
+
+const composerInputRef = ref<any>(null)
+const composerCaret = ref(0)
+const emojiOpen = ref(false)
+const emojiList = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
+  '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩',
+  '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪',
+  '😎', '🤓', '🥳', '🤗', '🤔', '🫡', '🤨', '😐',
+  '😑', '😶', '🙄', '😏', '😣', '😥', '😮‍💨', '😴',
+  '🤤', '😪', '😷', '🤒', '🤕', '🤧', '🥵', '🥶',
+  '😵', '🤯', '🤠', '😈', '👻', '💀', '👽', '🤖',
+  '😺', '🐶', '🐱', '🦊', '🐼', '🐨', '🐵', '🦄',
+  '👍', '👎', '👏', '🙌', '🙏', '👌', '🤝', '💪',
+  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '💔',
+  '✨', '🔥', '🎉', '🎊', '🎁', '💯', '💡', '🌟',
+  '☀️', '🌈', '⚡', '☕', '🍻', '🍕', '🍔', '🍰',
+]
+
+function onComposerSelectionChange(e: Event) {
+  const t = e.target as HTMLTextAreaElement | null
+  if (t && typeof t.selectionStart === 'number') {
+    composerCaret.value = t.selectionStart
+  }
+}
+
+function insertEmoji(emoji: string) {
+  const txt = composerText.value ?? ''
+  const caret = Math.min(Math.max(composerCaret.value, 0), txt.length)
+  composerText.value = txt.slice(0, caret) + emoji + txt.slice(caret)
+  composerCaret.value = caret + emoji.length
+  emojiOpen.value = false
+  nextTick(() => {
+    const el: HTMLTextAreaElement | null =
+      composerInputRef.value?.resizableTextArea?.textArea ??
+      composerInputRef.value?.$el?.querySelector?.('textarea') ??
+      null
+    if (el) {
+      el.focus()
+      try {
+        el.setSelectionRange(composerCaret.value, composerCaret.value)
+      } catch {
+        /* noop */
+      }
+    }
+  })
+}
 const replyCtx = ref<null | {
   parentCommentId: number
   rootCommentId: number
@@ -338,6 +413,25 @@ watch(
   color: #ff4d6d;
   cursor: pointer;
 }
+.comment-emoji-trigger {
+  margin-right: auto;
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ds-text-muted);
+  font-size: 18px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.comment-emoji-trigger:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--ds-text-primary);
+}
 .comment-list {
   display: flex;
   flex-direction: column;
@@ -345,5 +439,36 @@ watch(
 }
 .comment-loadmore {
   margin-top: 10px;
+}
+</style>
+
+<style>
+.comment-emoji-popover .ant-popover-inner-content {
+  padding: 8px;
+}
+.comment-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 30px);
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.comment-emoji-cell {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease;
+}
+.comment-emoji-cell:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 </style>

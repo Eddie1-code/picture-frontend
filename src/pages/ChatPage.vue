@@ -303,27 +303,48 @@ function stopPoll() {
   }
 }
 
+async function openConversationWith(targetRaw: string | number) {
+  const target = String(targetRaw ?? '')
+  if (!target || target === '0') return
+  const found = conversations.value.find((c) => String(c.targetUser?.id ?? '') === target)
+  if (found) {
+    await selectConversation(found)
+    return
+  }
+  // 未建立过会话：用 UserVO 虚拟一个对话 tab，允许直接发送
+  try {
+    const r = await getUserVoByIdUsingGet({ id: target as unknown as number })
+    if (r.data.code === 0 && r.data.data) {
+      activeUserId.value = target as unknown as number
+      activeUser.value = r.data.data
+      activeChatType.value = 0
+      // 将虚拟会话插到列表顶部，便于用户察觉 & 再次选中
+      const virtual: API.ChatConversationVO = {
+        targetUser: r.data.data,
+        chatType: 0,
+        unreadCount: 0,
+        lastMessageTime: new Date().toISOString() as unknown as string,
+        lastMessagePreview: '',
+      }
+      const exists = conversations.value.some(
+        (c) => String(c.targetUser?.id ?? '') === target,
+      )
+      if (!exists) {
+        conversations.value = [virtual, ...conversations.value]
+      }
+      await loadMessages(true)
+    } else {
+      antdMessage.error(r.data.message || '无法打开私信对话')
+    }
+  } catch (e: any) {
+    antdMessage.error('打开对话失败：' + (e?.message ?? '网络错误'))
+  }
+}
+
 onMounted(async () => {
   await fetchConversations()
-  const target = Number(route.query.targetUserId ?? 0)
-  if (target > 0) {
-    const found = conversations.value.find((c) => c.targetUser?.id === target)
-    if (found) {
-      await selectConversation(found)
-    } else {
-      try {
-        const r = await getUserVoByIdUsingGet({ id: target })
-        if (r.data.code === 0 && r.data.data) {
-          activeUserId.value = target
-          activeUser.value = r.data.data
-          activeChatType.value = 0
-          await loadMessages(true)
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-  }
+  const target = route.query.targetUserId
+  if (target) await openConversationWith(Array.isArray(target) ? target[0] ?? '' : target)
   startPoll()
 })
 onUnmounted(stopPoll)
@@ -331,24 +352,8 @@ onUnmounted(stopPoll)
 watch(
   () => route.query.targetUserId,
   async (v) => {
-    const t = Number(v ?? 0)
-    if (!t) return
-    const found = conversations.value.find((c) => c.targetUser?.id === t)
-    if (found) {
-      await selectConversation(found)
-    } else {
-      try {
-        const r = await getUserVoByIdUsingGet({ id: t })
-        if (r.data.code === 0 && r.data.data) {
-          activeUserId.value = t
-          activeUser.value = r.data.data
-          activeChatType.value = 0
-          await loadMessages(true)
-        }
-      } catch {
-        /* ignore */
-      }
-    }
+    if (!v) return
+    await openConversationWith(Array.isArray(v) ? v[0] ?? '' : v)
   },
 )
 </script>

@@ -24,6 +24,18 @@
             {{ tag }}
           </a-tag>
         </a-flex>
+        <div
+          v-if="picture.user?.id"
+          class="tile-author"
+          role="link"
+          tabindex="0"
+          :title="'查看 ' + (picture.user?.userName || '作者') + ' 的主页'"
+          @click.stop="onAuthorClick"
+          @keydown.enter.stop="onAuthorClick"
+        >
+          <a-avatar :size="20" :src="picture.user?.userAvatar" />
+          <span class="tile-author-name">{{ picture.user?.userName || '匿名作者' }}</span>
+        </div>
       </template>
     </a-card-meta>
     <template v-if="showOp" #actions>
@@ -51,6 +63,7 @@ import {
   ShareAltOutlined,
 } from '@ant-design/icons-vue'
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = withDefaults(
   defineProps<{
@@ -77,8 +90,16 @@ const emit = defineEmits<{
   delete: [API.PictureVO, Event]
 }>()
 
+const router = useRouter()
+
 const onCardClick = () => {
   emit('card-click', props.picture)
+}
+
+const onAuthorClick = () => {
+  const uid = props.picture.user?.id
+  if (!uid) return
+  router.push(`/user/profile/${uid}`)
 }
 
 const naturalW = ref(0)
@@ -175,6 +196,41 @@ const coverStyle = computed(() => {
 
 :deep(.card-meta .ant-card-meta-description) {
   margin-top: 8px !important;
+}
+
+.tile-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  background: rgba(139, 115, 85, 0.06);
+  cursor: pointer;
+  max-width: 100%;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.tile-author:hover,
+.tile-author:focus-visible {
+  outline: none;
+  background: rgba(139, 115, 85, 0.14);
+}
+
+.tile-author-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ds-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+.tile-author:hover .tile-author-name {
+  color: var(--ds-accent-deep);
 }
 
 .meta-tag {
