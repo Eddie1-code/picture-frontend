@@ -245,13 +245,13 @@ onMounted(() => {
   flex-shrink: 0;
   align-self: stretch;
   min-height: 100%;
+  overflow: visible;
 }
 
 .gs-panel {
-  position: absolute;
-  top: 0;
+  position: sticky;
+  top: calc(var(--ds-header-height) + 8px);
   left: 0;
-  bottom: 0;
   width: 64px;
   background: var(--ds-bg-elevated);
   border-right: 1px solid var(--ds-border-subtle);
@@ -330,21 +330,10 @@ onMounted(() => {
   background: var(--ds-accent-soft);
 }
 
-/* 菜单区占据中间伸缩空间，可滚动 */
+/* 菜单区自然排布，底部信息卡随内容流动 */
 .gs-menu-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-}
-
-.gs-menu-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-.gs-menu-scroll::-webkit-scrollbar-thumb {
-  background: var(--ds-border-subtle);
-  border-radius: 4px;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 /* 底部固定区：用量卡 + 品牌水印 */
