@@ -59,6 +59,10 @@
         应用结果
       </a-button>
     </a-flex>
+    <div v-if="loading" class="outpaint-progress">
+      <a-progress :percent="outPaintingPercent" status="active" />
+      <p class="outpaint-progress-hint">扩图任务处理中，请稍候…</p>
+    </div>
   </a-modal>
 </template>
 
@@ -85,6 +89,8 @@ const pollingInterval = ref<number | null>(null)
 const pollingCount = ref(0)
 const MAX_POLLING_COUNT = 120 // 10分钟，每5秒轮询一次
 const presetOption = ref('custom')
+/** 轮询扩图任务时的进度（0–100，近似） */
+const outPaintingPercent = ref(0)
 
 // 扩图参数
 const outPaintingParams = ref({
@@ -151,6 +157,7 @@ const resetState = () => {
   uploadLoading.value = false
   taskId.value = ''
   resultImageUrl.value = ''
+  outPaintingPercent.value = 0
   if (pollingInterval.value) {
     clearInterval(pollingInterval.value)
     pollingInterval.value = null
@@ -183,6 +190,7 @@ const createTask = async () => {
   }
   
   loading.value = true
+  outPaintingPercent.value = 6
   try {
     const response = await createPictureOutPaintingTaskUsingPost({
       pictureId: props.picture.id,
@@ -198,14 +206,17 @@ const createTask = async () => {
       } else {
         message.error('创建扩图任务失败：未返回任务ID')
         loading.value = false
+        outPaintingPercent.value = 0
       }
     } else {
       message.error(apiResponse.message || '创建扩图任务失败')
       loading.value = false
+      outPaintingPercent.value = 0
     }
   } catch (error: any) {
     message.error(error.message || '创建扩图任务失败')
     loading.value = false
+    outPaintingPercent.value = 0
   }
 }
 
@@ -215,7 +226,8 @@ const startPolling = () => {
   
   pollingInterval.value = window.setInterval(async () => {
     pollingCount.value++
-    
+    outPaintingPercent.value = Math.min(92, 8 + Math.floor((pollingCount.value / MAX_POLLING_COUNT) * 84))
+
     // 检查是否超时
     if (pollingCount.value > MAX_POLLING_COUNT) {
       message.error('扩图任务超时，已自动终止')
@@ -233,6 +245,7 @@ const startPolling = () => {
         
         if (taskOutput.taskStatus === 'SUCCEEDED') {
           // 任务成功
+          outPaintingPercent.value = 100
           message.success('扩图成功')
           resultImageUrl.value = taskOutput.outputImageUrl || ''
           // 只清除轮询定时器，不重置所有状态
@@ -288,5 +301,16 @@ defineExpose({
 <style scoped>
 .image-out-painting {
   text-align: center;
+}
+
+.outpaint-progress {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.outpaint-progress-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.55);
 }
 </style>

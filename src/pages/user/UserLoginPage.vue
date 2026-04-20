@@ -1,30 +1,36 @@
 <template>
-  <div id="userLoginPage">
-    <h2 class="title">云图库 - 用户登录</h2>
-    <div class="desc">企业级智能协同云图库</div>
-    <a-form :model="formState" name="basic" autocomplete="off" @finish="handleSubmit">
-      <a-form-item name="userAccount" :rules="[{ required: true, message: '请输入账号' }]">
-        <a-input v-model:value="formState.userAccount" placeholder="请输入账号" />
-      </a-form-item>
+  <div id="userLoginPage" class="ds-page ds-page--auth">
+    <header class="ds-page-hero">
+      <p class="ds-hero-eyebrow">欢迎回来</p>
+      <h1 class="ds-page-title">登录云图库</h1>
+      <p class="ds-page-lead">企业级智能协同云图库，安全存储与分享你的素材。</p>
+    </header>
 
-      <a-form-item
-        name="userPassword"
-        :rules="[
-          { required: true, message: '请输入密码' },
-          { min: 8, message: '密码长度不能少于8位' },
-        ]"
-      >
-        <a-input-password v-model:value="formState.userPassword" placeholder="请输入密码" />
-      </a-form-item>
+    <div class="login-card ds-texture-panel">
+      <a-form :model="formState" name="basic" autocomplete="off" @finish="handleSubmit">
+        <a-form-item name="userAccount" :rules="[{ required: true, message: '请输入账号' }]">
+          <a-input v-model:value="formState.userAccount" placeholder="请输入账号" size="large" />
+        </a-form-item>
 
-      <div class="tips">
-        没有账号？
-        <RouterLink to="/user/register">去注册</RouterLink>
-      </div>
-      <a-form-item>
-        <a-button type="primary" html-type="submit" style="width: 100%">登录</a-button>
-      </a-form-item>
-    </a-form>
+        <a-form-item
+          name="userPassword"
+          :rules="[
+            { required: true, message: '请输入密码' },
+            { min: 8, message: '密码长度不能少于8位' },
+          ]"
+        >
+          <a-input-password v-model:value="formState.userPassword" placeholder="请输入密码" size="large" />
+        </a-form-item>
+
+        <div class="tips">
+          没有账号？
+          <RouterLink to="/user/register">去注册</RouterLink>
+        </div>
+        <a-form-item>
+          <a-button type="primary" html-type="submit" class="submit-btn" size="large">登录</a-button>
+        </a-form-item>
+      </a-form>
+    </div>
   </div>
 </template>
 
@@ -33,59 +39,61 @@ import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import { userLoginUsingPost } from '@/api/userController.ts'
-import { message } from 'ant-design-vue' //用于接受表单输入的值
+import { message } from 'ant-design-vue'
 
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
 
-//用于接收表单输入的值
 const formState = reactive<API.UserLoginRequest>({
   userAccount: '',
   userPassword: '',
 })
 
-/**
- * 提交表单
- * @param values
- */
-const handleSubmit = async (values: any) => {
-  const res = await userLoginUsingPost(values)
-  //登录成功，把登录太保存到全局状态中
-  if(res.data.code == 0 && res.data.data){
+const handleSubmit = async () => {
+  const res = await userLoginUsingPost(formState)
+  if (res.data.code == 0 && res.data.data) {
     await loginUserStore.fetchLoginUser()
     message.success('登录成功')
-    //跳转到首页
     router.push({
       path: '/',
       replace: true,
     })
-  }else{
+  } else {
     message.error('登录失败，' + res.data.message)
   }
 }
 </script>
 
 <style scoped>
-#userLoginPage {
-  max-width: 360px;
-  margin: 0 auto;
+.login-card {
+  position: relative;
+  padding: 28px 26px 24px;
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid var(--ds-border-subtle);
+  box-shadow: var(--ds-shadow-md);
 }
 
-.title {
-  text-align: center;
-  margin-bottom: 16px;
+.login-card > * {
+  position: relative;
+  z-index: 1;
 }
 
-.desc {
-  text-align: center;
-  color: #bbb;
-  margin-bottom: 16px;
+:deep(.ant-input-lg),
+:deep(.ant-input-password-large .ant-input) {
+  border-radius: var(--ds-radius-md);
 }
 
 .tips {
   margin-bottom: 16px;
-  color: #bbb;
+  color: var(--ds-text-muted);
   font-size: 13px;
   text-align: right;
+}
+
+.submit-btn {
+  width: 100%;
+  height: 46px;
+  font-weight: 600;
+  border-radius: var(--ds-radius-md);
 }
 </style>

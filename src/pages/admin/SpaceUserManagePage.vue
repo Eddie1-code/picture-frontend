@@ -1,42 +1,35 @@
 <template>
-  <div id="SpaceManagePage">
-    <a-flex justify="space-between">
-      <h2>空间成员管理</h2>
-      <a-space>
-        <a-button type="primary" @click="goToAddSpace">+ 创建空间</a-button>
-        <a-button
-          type="primary"
-          ghost
-          :icon="h(BarChartOutlined)"
-          @click="goToAnalyzePublic"
-        >
+  <div id="SpaceUserManagePage" class="ds-page space-user-manage-page">
+    <header class="ds-page-hero">
+      <p class="ds-hero-eyebrow">协作</p>
+      <h1 class="ds-page-title">空间成员管理</h1>
+      <p class="ds-page-lead">为当前空间添加成员并分配角色；支持快捷入口跳转图库分析。</p>
+    </header>
+
+    <div class="manage-toolbar">
+      <a-space wrap>
+        <a-button type="primary" size="large" @click="goToAddSpace">+ 创建空间</a-button>
+        <a-button type="primary" ghost size="large" :icon="h(BarChartOutlined)" @click="goToAnalyzePublic">
           分析公共图库
         </a-button>
-        <a-button
-          type="primary"
-          ghost
-          :icon="h(BarChartOutlined)"
-          @click="goToAnalyzeAll"
-        >
+        <a-button type="primary" ghost size="large" :icon="h(BarChartOutlined)" @click="goToAnalyzeAll">
           分析全部空间
         </a-button>
-        <a-button type="primary" @click="goToAddSpaceBatch" ghost
-          >+ 批量创建空间
-        </a-button>
       </a-space>
-    </a-flex>
-    <div style="margin-bottom: 16px" />
-    <!-- 添加成员表单 -->
-    <a-form layout="inline" :model="formData" @finish="handleSubmit">
-      <a-form-item label="用户 id" name="userId">
-        <a-input v-model:value="formData.userId" placeholder="请输入用户 id" allow-clear />
+    </div>
+
+    <a-form layout="inline" :model="formData" class="filter-form ds-filter-panel" @finish="handleSubmit">
+      <a-form-item name="userId">
+        <template #label>
+          <span class="ds-filter-inline-label">用户 ID</span>
+        </template>
+        <a-input v-model:value="formData.userId" placeholder="请输入用户 ID" allow-clear />
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit">添加用户</a-button>
       </a-form-item>
     </a-form>
 
-    <div style="margin-bottom: 16px" />
     <!-- 数据表格 -->
     <a-table :columns="columns" :data-source="dataList">
       <template #bodyCell="{ column, record }">
@@ -187,10 +180,6 @@ const goToAddSpace = () => {
   go('/add_space')
 }
 
-const goToAddSpaceBatch = () => {
-  go('/add_space/batch')
-}
-
 const goToAnalyzePublic = () => {
   go('/space_analyze?queryPublic=1')
 }
@@ -201,6 +190,16 @@ const goToAnalyzeAll = () => {
 </script>
 
 <style scoped>
+.space-user-manage-page {
+  padding-bottom: 40px;
+}
+
+.manage-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
 .review-btn {
   border-radius: 20px;
   border-width: 1.5px;

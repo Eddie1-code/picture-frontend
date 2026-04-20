@@ -1,14 +1,17 @@
 <template>
-  <div id="spaceAnalyzePage">
-    <h2>
-      空间图库分析 -
-      <span v-if="queryAll"> 全部空间 </span>
-      <span v-else-if="queryPublic"> 公共图库 </span>
-      <span v-else>
-        <a @click="goToSpaceDetail">id：{{ spaceId }}</a>
-      </span>
-    </h2>
-    <div style="margin-bottom: 16px" />
+  <div id="spaceAnalyzePage" class="ds-page">
+    <header class="ds-page-hero analyze-hero">
+      <p class="ds-hero-eyebrow">数据洞察</p>
+      <h1 class="ds-page-title">空间图库分析</h1>
+      <p class="ds-page-lead analyze-hero__scope">
+        <span v-if="queryAll">全部空间</span>
+        <span v-else-if="queryPublic">公共图库</span>
+        <span v-else>
+          当前空间
+          <a class="analyze-space-link" @click="goToSpaceDetail">id：{{ spaceId }}</a>
+        </span>
+      </p>
+    </header>
     <a-row :gutter="[16, 16]">
       <!-- 空间使用分析 -->
       <a-col :xs="24" :md="12">
@@ -85,4 +88,16 @@ const goToSpaceDetail = () => {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+#spaceAnalyzePage {
+  padding-bottom: 40px;
+}
+
+.analyze-hero__scope {
+  font-size: 15px;
+}
+
+.analyze-space-link {
+  margin-left: 4px;
+}
+</style>

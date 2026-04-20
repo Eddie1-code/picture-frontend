@@ -1,17 +1,26 @@
 <template>
-  <div id="searchPicturePage">
-    <h2 style="margin-bottom: 16px">以图搜图</h2>
-    <h3 style="margin: 16px 0">原图</h3>
-    <a-card style="width: 240px">
-      <template #cover>
-        <img
-          style="height: 180px; object-fit: cover"
-          :alt="picture.name"
-          :src="picture.thumbnailUrl ?? picture.url"
-        />
-      </template>
-    </a-card>
-    <h3 style="margin: 16px 0">识图结果</h3>
+  <div id="searchPicturePage" class="ds-page">
+    <header class="ds-page-hero">
+      <p class="ds-hero-eyebrow">智能检索</p>
+      <h1 class="ds-page-title">以图搜图</h1>
+      <p class="ds-page-lead">基于当前图片在全网索引中查找相似结果，点击卡片可在新标签页打开。</p>
+    </header>
+
+    <section class="search-origin ds-inner-card" aria-label="原图">
+      <h2 class="search-section-title">原图</h2>
+      <a-card class="ds-surface-card origin-thumb" :bordered="false">
+        <template #cover>
+          <img
+            class="origin-thumb__img"
+            :alt="picture.name ?? '原图'"
+            :src="picture.thumbnailUrl ?? picture.url"
+          />
+        </template>
+      </a-card>
+    </section>
+
+    <section class="search-results" aria-label="识图结果">
+      <h2 class="search-section-title">识图结果</h2>
     <!-- 图片结果列表 -->
     <a-list
       :grid="{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 5, xxl: 6 }"
@@ -19,16 +28,17 @@
     >
       <template #renderItem="{ item }">
         <a-list-item style="padding: 0">
-          <a :href="item.imgUrl" target="_blank">
-            <a-card>
+          <a class="result-link" :href="item.imgUrl" target="_blank" rel="noreferrer">
+            <a-card class="ds-surface-card result-card">
               <template #cover>
-                <img style="height: 180px; object-fit: cover" :src="item.imgUrl" />
+                <img class="result-card__img" :src="item.imgUrl" alt="" />
               </template>
             </a-card>
           </a>
         </a-list-item>
       </template>
     </a-list>
+    </section>
   </div>
 </template>
 
@@ -100,6 +110,48 @@ onMounted(() => {
 
 <style scoped>
 #searchPicturePage {
-  margin-bottom: 16px;
+  padding-bottom: 48px;
+}
+
+.search-section-title {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+}
+
+.search-origin {
+  max-width: 280px;
+  padding: 16px;
+  margin-bottom: 28px;
+}
+
+.origin-thumb {
+  overflow: hidden;
+  border-radius: var(--ds-radius-md);
+}
+
+.origin-thumb__img {
+  display: block;
+  height: 180px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.search-results {
+  margin-top: 8px;
+}
+
+.result-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.result-card__img {
+  height: 180px;
+  width: 100%;
+  object-fit: cover;
+  display: block;
 }
 </style>

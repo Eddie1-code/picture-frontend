@@ -1,127 +1,143 @@
 <template>
-  <div id="SpaceManagePage">
-    <a-flex justify="space-between">
-      <h2>空间管理</h2>
-      <a-space>
-        <a-button type="primary" @click="goToAddSpace">+ 创建空间</a-button>
-        <a-button
-          type="primary"
-          ghost
-          :icon="h(BarChartOutlined)"
-          @click="goToAnalyzePublic"
-        >
-          分析公共图库
-        </a-button>
-        <a-button
-          type="primary"
-          ghost
-          :icon="h(BarChartOutlined)"
-          @click="goToAnalyzeAll"
-        >
-          分析全部空间
-        </a-button>
-        <a-button type="primary" @click="goToAddSpaceBatch" ghost
-          >+ 批量创建空间
-        </a-button>
-      </a-space>
-    </a-flex>
-    <div style="margin-bottom: 16px" />
-    <!-- 搜索表单 -->
-    <a-form layout="inline" :model="searchParams" @finish="doSearch">
-      <a-form-item label="空间名称">
-        <a-input v-model:value="searchParams.spaceName" placeholder="请输入空间名称" allow-clear />
-      </a-form-item>
-      <a-form-item name="spaceLevel" label="空间级别">
-        <a-select
-          v-model:value="searchParams.spaceLevel"
-          placeholder="请选择空间级别"
-          :options="SPACE_LEVEL_OPTIONS"
-          style="min-width: 180px"
-          allow-clear
-        />
-      </a-form-item>
-      <a-form-item label="空间类别" name="spaceType">
-        <a-select
-          v-model:value="searchParams.spaceType"
-          :options="SPACE_TYPE_OPTIONS"
-          placeholder="请输入空间类别"
-          style="min-width: 180px"
-          allow-clear
-        />
-      </a-form-item>
-      <a-form-item label="用户 id">
-        <a-input v-model:value="searchParams.userId" placeholder="请输入用户 id" allow-clear />
-      </a-form-item>
-      <a-form-item>
-        <a-button type="primary" html-type="submit">搜索</a-button>
-      </a-form-item>
+  <div id="SpaceManagePage" class="ds-page space-manage-page">
+    <header class="ds-page-hero space-manage-hero">
+      <p class="ds-hero-eyebrow">管理后台</p>
+      <h1 class="ds-page-title">空间管理</h1>
+      <p class="ds-page-lead">创建与检索空间，入口可跳转至用量分析与公共图库洞察。</p>
+      <nav class="ds-manage-actions-bar" aria-label="快捷操作">
+        <a-button type="primary" :icon="h(PlusOutlined)" @click="goToAddSpace">创建空间</a-button>
+        <a-button type="primary" ghost :icon="h(BarChartOutlined)" @click="goToAnalyzePublic">公共图库分析</a-button>
+        <a-button type="primary" ghost :icon="h(BarChartOutlined)" @click="goToAnalyzeAll">全部分析</a-button>
+      </nav>
+    </header>
+
+    <a-form layout="inline" :model="searchParams" class="ds-admin-filter-bar" @finish="doSearch">
+      <div class="ds-admin-filter-bar__inner">
+        <a-form-item label="空间名称" class="ds-admin-filter-bar__field">
+          <a-input
+            v-model:value="searchParams.spaceName"
+            allow-clear
+            placeholder="名称关键词"
+            class="ds-admin-filter-bar__input"
+          />
+        </a-form-item>
+        <a-form-item name="spaceLevel" label="空间级别" class="ds-admin-filter-bar__field">
+          <a-select
+            v-model:value="searchParams.spaceLevel"
+            placeholder="全部级别"
+            :options="SPACE_LEVEL_OPTIONS"
+            allow-clear
+            class="ds-admin-filter-bar__select--md"
+          />
+        </a-form-item>
+        <a-form-item label="空间类别" name="spaceType" class="ds-admin-filter-bar__field">
+          <a-select
+            v-model:value="searchParams.spaceType"
+            :options="SPACE_TYPE_OPTIONS"
+            placeholder="全部类别"
+            allow-clear
+            class="ds-admin-filter-bar__select--md"
+          />
+        </a-form-item>
+        <a-form-item label="用户 ID" class="ds-admin-filter-bar__field">
+          <a-input
+            v-model:value="searchParams.userId"
+            allow-clear
+            placeholder="创建者用户 ID"
+            class="ds-admin-filter-bar__input--md"
+          />
+        </a-form-item>
+        <a-form-item class="ds-admin-filter-bar__ops">
+          <a-space :size="10" align="center">
+            <a-button class="ds-admin-filter-bar__btn-reset" @click="resetFilters">重置</a-button>
+            <a-button type="primary" html-type="submit" class="ds-admin-filter-bar__btn-submit">搜索</a-button>
+          </a-space>
+        </a-form-item>
+      </div>
     </a-form>
 
-    <div style="margin-bottom: 16px" />
-    <!-- 数据表格 -->
-    <a-table
-      :columns="columns"
-      :data-source="dataList"
-      :pagination="pagination"
-      @change="doTableChange"
-    >
-      <template #bodyCell="{ column, record }">
-        <!-- 空间级别 -->
-        <template v-if="column.dataIndex === 'spaceLevel'">
-          <div>{{ SPACE_LEVEL_MAP[record.reviewStatus] }}</div>
-        </template>
-        <!-- 空间类别 -->
-        <template v-if="column.dataIndex === 'spaceType'">
-          <a-tag>{{ SPACE_TYPE_MAP[record.spaceType] }}</a-tag>
-        </template>
-        <template v-if="column.dataIndex === 'SpaceUseInfo'">
-          <div>大小：{{ formatSize(record.totalSize) }} / {{ formatSize(record.maxSize) }}</div>
-          <div>数量：{{ record.totalCount }} / {{ record.maxCount }}</div>
-        </template>
-
-        <template v-else-if="column.dataIndex === 'createTime'">
-          {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
-        </template>
-        <template v-else-if="column.dataIndex === 'editTime'">
-          {{ dayjs(record.editTime).format('YYYY-MM-DD HH:mm:ss') }}
-        </template>
-        <template v-else-if="column.key === 'action'">
-          <a-space wrap style="justify-content: center; width: 100%; display: flex">
-            <a-button
-              type="primary"
-              style="display: block; margin-bottom: 8px; width: 80px"
-              @click="goToAnalyzeSpace(record.id)"
-            >
-              分析
-            </a-button>
-            <a-button
-              type="primary"
-              ghost
-              @click="goToEditSpace(record.id)"
-              style="display: block; margin-bottom: 8px; width: 80px"
-              >编辑
-            </a-button>
-            <a-popconfirm
-              title="确定要删除该空间吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="doDelete(record.id)"
-            >
-              <a-button danger style="display: block; margin-bottom: 8px; width: 80px">
-                删除
+    <div class="ds-admin-list-stack" :class="{ 'ds-admin-list-stack--batch-open': selectedRowKeys.length > 0 }">
+      <AdminBatchStrip :count="selectedRowKeys.length" @clear="clearBatchSelection">
+        <a-button danger size="small" :loading="batchDeleting" @click="confirmBatchDelete">批量删除</a-button>
+      </AdminBatchStrip>
+      <div class="ds-admin-table-shell ds-admin-table-shell--in-stack">
+      <a-table
+        row-key="id"
+        class="ds-admin-data-table"
+        :columns="columns"
+        :data-source="dataList"
+        :pagination="pagination"
+        :scroll="{ x: 1180 }"
+        :row-selection="rowSelection"
+        @change="doTableChange"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'id'">
+            <a-tooltip :title="formatIdTooltip(record.id)">
+              <span class="ds-cell-id">{{ record.id }}</span>
+            </a-tooltip>
+          </template>
+          <template v-else-if="column.dataIndex === 'spaceName'">
+            <span class="ds-cell-strong">{{ record.spaceName || '—' }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'spaceLevel'">
+            <span class="ds-cell-strong">{{ SPACE_LEVEL_MAP[record.spaceLevel] ?? '—' }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'spaceType'">
+            <a-tag class="ds-tag-compact">{{ SPACE_TYPE_MAP[record.spaceType] ?? '—' }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'spaceUseInfo'">
+            <div class="ds-cell-pic-info">
+              <div class="ds-cell-pic-main">
+                {{ formatSize(record.totalSize) }} / {{ formatSize(record.maxSize) }}
+              </div>
+              <div class="ds-cell-pic-sub">数量 {{ record.totalCount ?? '—' }} / {{ record.maxCount ?? '—' }}</div>
+            </div>
+          </template>
+          <template v-else-if="column.dataIndex === 'userId'">
+            <a-tooltip v-if="record.userId != null" :title="formatIdTooltip(record.userId)">
+              <span class="ds-cell-id">{{ record.userId }}</span>
+            </a-tooltip>
+            <span v-else class="ds-cell-muted">—</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'createTime'">
+            <span class="ds-cell-time">{{ dayjs(record.createTime).format('MM-DD HH:mm') }}</span>
+          </template>
+          <template v-else-if="column.dataIndex === 'editTime'">
+            <span class="ds-cell-time">{{ dayjs(record.editTime).format('MM-DD HH:mm') }}</span>
+          </template>
+          <template v-else-if="column.key === 'action'">
+            <div class="ds-table-actions ds-table-actions--inline">
+              <a-button type="link" size="small" class="ds-act-link-accent" @click="goToAnalyzeSpace(record.id)">
+                分析
               </a-button>
-            </a-popconfirm>
-          </a-space>
+              <span class="ds-table-actions-sep">·</span>
+              <a-button type="link" size="small" class="ds-act-link-muted" @click="goToEditSpace(record.id)">
+                编辑
+              </a-button>
+              <span class="ds-table-actions-sep">·</span>
+              <a-popconfirm
+                title="确定要删除该空间吗？"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="doDelete(record.id)"
+              >
+                <a-button type="link" size="small" danger>删除</a-button>
+              </a-popconfirm>
+            </div>
+          </template>
         </template>
-      </template>
-    </a-table>
+      </a-table>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, h, onMounted, reactive, ref } from 'vue'
+import type { TableProps } from 'ant-design-vue'
 import { deleteSpaceUsingPost, listSpaceByPageUsingPost } from '@/api/spaceController.ts'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import {
   SPACE_LEVEL_MAP,
@@ -130,9 +146,10 @@ import {
   SPACE_TYPE_OPTIONS,
 } from '@/constants/space.ts'
 import { formatSize } from '@/utils'
-import { BarChartOutlined } from '@ant-design/icons-vue'
+import { BarChartOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 import { useSafeNavigate } from '@/utils/safeNavigate.ts'
+import AdminBatchStrip from '@/components/AdminBatchStrip.vue'
 
 const router = useRouter()
 const { go } = useSafeNavigate(router)
@@ -141,46 +158,68 @@ const columns = [
   {
     title: 'id',
     dataIndex: 'id',
-    width: 80,
+    width: 152,
+    fixed: 'left' as const,
+    ellipsis: true,
   },
   {
     title: '空间名称',
     dataIndex: 'spaceName',
+    width: 140,
+    ellipsis: true,
   },
   {
     title: '空间级别',
     dataIndex: 'spaceLevel',
+    width: 96,
   },
   {
     title: '空间类别',
     dataIndex: 'spaceType',
+    width: 112,
   },
   {
     title: '使用情况',
     dataIndex: 'spaceUseInfo',
+    width: 168,
   },
   {
     title: '用户 id',
     dataIndex: 'userId',
-    width: 80,
+    width: 128,
+    ellipsis: true,
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
+    width: 108,
   },
   {
     title: '编辑时间',
     dataIndex: 'editTime',
+    width: 108,
   },
   {
     title: '操作',
     key: 'action',
+    width: 104,
+    fixed: 'right' as const,
   },
 ]
 
 // 数据
 const dataList = ref<API.Space[]>([])
 const total = ref(0)
+const selectedRowKeys = ref<(string | number)[]>([])
+const batchDeleting = ref(false)
+
+const rowSelection = computed<TableProps['rowSelection']>(() => ({
+  selectedRowKeys: selectedRowKeys.value,
+  preserveSelectedRowKeys: true,
+  onChange: (keys: (string | number)[]) => {
+    selectedRowKeys.value = keys
+  },
+}))
 
 // 搜索条件
 const searchParams = reactive<API.SpaceQueryRequest>({
@@ -221,11 +260,67 @@ const fetchData = async () => {
   }
 }
 
+const clearBatchSelection = () => {
+  selectedRowKeys.value = []
+}
+
+const resetFilters = () => {
+  searchParams.spaceName = undefined
+  searchParams.spaceLevel = undefined
+  searchParams.spaceType = undefined
+  searchParams.userId = undefined
+  searchParams.current = 1
+  selectedRowKeys.value = []
+  fetchData()
+}
+
 // 获取数据
 const doSearch = () => {
   // 重置页码
   searchParams.current = 1
+  selectedRowKeys.value = []
   fetchData()
+}
+
+const confirmBatchDelete = () => {
+  if (!selectedRowKeys.value.length) {
+    message.warning('请先勾选要删除的空间')
+    return
+  }
+  Modal.confirm({
+    title: '批量删除空间',
+    content: `将删除选中的 ${selectedRowKeys.value.length} 个空间，操作不可恢复。是否继续？`,
+    okText: '确定删除',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: batchDeleteSelected,
+  })
+}
+
+const batchDeleteSelected = async () => {
+  batchDeleting.value = true
+  let ok = 0
+  let fail = 0
+  const keys = [...selectedRowKeys.value]
+  try {
+    for (const id of keys) {
+      const res = await deleteSpaceUsingPost({ id })
+      if (res.data.code === 0) {
+        ok++
+      } else {
+        fail++
+      }
+    }
+    selectedRowKeys.value = []
+    await fetchData()
+    if (fail === 0) {
+      message.success(`已删除 ${ok} 个空间`)
+    } else {
+      message.warning(`删除完成：成功 ${ok} 条，失败 ${fail} 条`)
+    }
+  } finally {
+    batchDeleting.value = false
+  }
 }
 
 // 删除数据
@@ -247,10 +342,6 @@ const goToAddSpace = () => {
   go('/add_space')
 }
 
-const goToAddSpaceBatch = () => {
-  go('/add_space/batch')
-}
-
 const goToAnalyzePublic = () => {
   go('/space_analyze?queryPublic=1')
 }
@@ -267,6 +358,11 @@ const goToEditSpace = (id: string) => {
   go(`/add_space?id=${id}`)
 }
 
+function formatIdTooltip(id: string | number | undefined): string {
+  if (id == null) return ''
+  return String(id)
+}
+
 // 页面加载时，请求一次
 onMounted(() => {
   fetchData()
@@ -274,36 +370,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.review-btn {
-  border-radius: 20px;
-  border-width: 1.5px;
-  min-width: 64px;
+.space-manage-page {
+  padding-bottom: 40px;
+}
+
+.space-manage-hero {
+  margin-bottom: 18px;
+}
+
+.ds-admin-list-stack {
+  margin-top: 0;
+}
+
+.ds-admin-table-shell {
   margin-bottom: 8px;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.review-btn.pass {
-  color: #52c41a;
-  border-color: #b7eb8f;
-  background: #f6ffed;
-}
-
-.review-btn.pass:hover {
-  color: #fff;
-  background: #52c41a;
-  border-color: #52c41a;
-}
-
-.review-btn.reject {
-  color: #ff4d4f;
-  border-color: #ffccc7;
-  background: #fff1f0;
-}
-
-.review-btn.reject:hover {
-  color: #fff;
-  background: #ff4d4f;
-  border-color: #ff4d4f;
 }
 </style>

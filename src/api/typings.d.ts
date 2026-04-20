@@ -29,6 +29,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseListPictureBatchFetchCandidateVO_ = {
+    code?: number
+    data?: PictureBatchFetchCandidateVO[]
+    message?: string
+  }
+
   type BaseResponseListPictureVO_ = {
     code?: number
     data?: PictureVO[]
@@ -327,9 +333,7 @@ declare namespace API {
     rightOffset?: number
     topOffset?: number
     xScale?: number
-    xscale?: number
     yScale?: number
-    yscale?: number
   }
 
   type Picture = {
@@ -356,6 +360,16 @@ declare namespace API {
     updateTime?: string
     url?: string
     userId?: number
+  }
+
+  type PictureBatchFetchCandidateVO = {
+    fileUrl?: string
+    index?: number
+  }
+
+  type PictureBatchFetchPreviewRequest = {
+    count?: number
+    searchText?: string
   }
 
   type PictureEditByBatchRequest = {
@@ -703,7 +717,10 @@ declare namespace API {
   type UserRegisterRequest = {
     checkPassword?: string
     userAccount?: string
+    userAvatar?: string
+    userName?: string
     userPassword?: string
+    userProfile?: string
   }
 
   type UserUpdateRequest = {

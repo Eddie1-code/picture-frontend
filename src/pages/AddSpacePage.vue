@@ -1,50 +1,71 @@
 <template>
-  <div id="addSpacePage">
-    <h2 style="margin-bottom: 16px">
-      {{ route.query?.id ? '修改' : '创建' }}{{ SPACE_TYPE_MAP[spaceType] }}
-    </h2>
-    <!-- 空间表单信息 -->
-    <a-form layout="vertical" :model="spaceForm" @finish="handleSubmit">
-      <a-form-item name="spaceName" label="空间名称">
-        <a-input v-model:value="spaceForm.spaceName" placeholder="请输入空间名称" allow-clear />
-      </a-form-item>
-      <a-form-item label="空间级别" name="spaceLevel">
-        <a-select
-          v-model:value="spaceForm.spaceLevel"
-          :options="SPACE_LEVEL_OPTIONS"
-          placeholder="请输入空间级别"
-          style="min-width: 180px"
-          allow-clear
-        />
-      </a-form-item>
-      <a-form-item>
-        <a-button type="primary" html-type="submit" :loading="loading" style="width: 100%"
-          >提交</a-button
-        >
-      </a-form-item>
-    </a-form>
+  <div id="addSpacePage" class="ds-page ds-page--narrow">
+    <header class="ds-page-hero">
+      <p class="ds-hero-eyebrow">空间</p>
+      <h1 class="ds-page-title">{{ route.query?.id ? '修改' : '创建' }}{{ SPACE_TYPE_MAP[spaceType] }}</h1>
+      <p class="ds-page-lead">
+        为空间命名并选择级别；创建完成后可在侧栏进入，上传与管理你的图片作品。
+      </p>
+    </header>
 
-    <a-card title="空间级别介绍">
-      <a-typography-paragraph>
-        \* 目前仅支持开通普通版，如需升级空间，请联系
-        <a href="mailto:15012798480@163.com" target="_blank">15012798480@163.com</a>
-      </a-typography-paragraph>
-      <a-typography-paragraph
-        v-for="spaceLevel in spaceLevelList"
-        :key="spaceLevel.value"
-        style="display: flex; align-items: center"
-      >
-        <component
-          v-if="spaceLevel.value !== undefined && levelIconMap[spaceLevel.value]"
-          :is="icons[levelIconMap[spaceLevel.value]]"
-          style="font-size: 24px; margin-right: 12px"
-        />
-        <span>
-          {{ spaceLevel.text }}： 大小 {{ formatSize(spaceLevel.maxSize) }}，数量
-          {{ spaceLevel.maxCount }}
-        </span>
-      </a-typography-paragraph>
-    </a-card>
+    <div class="space-layout">
+      <section class="space-main">
+        <div class="space-form-card ds-texture-panel">
+          <h2 class="card-h2">基本信息</h2>
+          <p class="card-sub">带 <span class="req">*</span> 为必填项。</p>
+          <a-form layout="vertical" :model="spaceForm" @finish="handleSubmit">
+            <a-form-item name="spaceName">
+              <template #label>
+                <span class="field-label field-label--required">空间名称</span>
+              </template>
+              <a-input v-model:value="spaceForm.spaceName" placeholder="请输入空间名称" allow-clear size="large" />
+            </a-form-item>
+            <a-form-item name="spaceLevel">
+              <template #label>
+                <span class="field-label field-label--required">空间级别</span>
+              </template>
+              <a-select
+                v-model:value="spaceForm.spaceLevel"
+                :options="SPACE_LEVEL_OPTIONS"
+                placeholder="请选择空间级别"
+                style="width: 100%"
+                size="large"
+                allow-clear
+              />
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" html-type="submit" :loading="loading" class="submit-wide" size="large">
+                提交
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </div>
+      </section>
+
+      <aside class="space-aside" aria-label="空间级别说明">
+        <div class="level-intro ds-inner-card">
+          <h3 class="aside-h3">级别说明</h3>
+          <p class="aside-note">
+            目前仅支持开通普通版，如需升级请联系
+            <a href="mailto:15012798480@163.com" target="_blank">15012798480@163.com</a>
+          </p>
+          <ul class="level-list">
+            <li v-for="spaceLevel in spaceLevelList" :key="String(spaceLevel.value)">
+              <span class="level-icon" aria-hidden="true">
+                <component
+                  v-if="spaceLevel.value !== undefined && levelIconMap[spaceLevel.value]"
+                  :is="icons[levelIconMap[spaceLevel.value]]"
+                />
+              </span>
+              <span>
+                <strong>{{ spaceLevel.text }}</strong>
+                ：存储 {{ formatSize(spaceLevel.maxSize) }}，数量上限 {{ spaceLevel.maxCount }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
   </div>
 </template>
 
@@ -62,6 +83,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { SPACE_LEVEL_OPTIONS, SPACE_TYPE_ENUM, SPACE_TYPE_MAP } from '@/constants/space.ts'
 import { formatSize } from '../utils'
 
+const route = useRoute()
+const router = useRouter()
 const spaceForm = reactive<API.SpaceAddRequest>({})
 const loading = ref(false)
 
@@ -84,12 +107,6 @@ const fetchSpaceLevelList = async () => {
     message.error('获取空间级别失败，' + res.data.message)
   }
 }
-onMounted(() => {
-  fetchSpaceLevelList()
-})
-
-const router = useRouter()
-
 // value 和 icon 名称映射
 const levelIconMap: Record<number, string> = {
   0: 'SmileOutlined',
@@ -137,8 +154,6 @@ const handleSubmit = async (values: any) => {
   loading.value = false
 }
 
-
-const route = useRoute()
 const oldSpace = ref<API.SpaceVO>()
 
 // 获取老数据
@@ -160,13 +175,122 @@ const getOldSpace = async () => {
 }
 
 onMounted(() => {
+  fetchSpaceLevelList()
   getOldSpace()
 })
 </script>
 
 <style scoped>
 #addSpacePage {
-  max-width: 720px;
-  margin: 0 auto;
+  padding-bottom: 48px;
+}
+
+.space-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .space-layout {
+    grid-template-columns: 1fr;
+  }
+  .space-aside {
+    order: -1;
+  }
+}
+
+.space-form-card {
+  position: relative;
+  padding: 26px 24px 22px;
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid var(--ds-border-subtle);
+  box-shadow: var(--ds-shadow-md);
+}
+
+.space-form-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card-h2 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+}
+
+.card-sub {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--ds-text-muted);
+}
+
+.req {
+  color: var(--ds-accent);
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+  letter-spacing: 0.01em;
+}
+
+.field-label--required::before {
+  content: '*';
+  margin-right: 4px;
+  color: #d4380d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.submit-wide {
+  width: 100%;
+  height: 46px;
+  font-weight: 600;
+  border-radius: var(--ds-radius-md);
+}
+
+.aside-h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+}
+
+.aside-note {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ds-text-secondary);
+}
+
+.level-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ds-text-secondary);
+}
+
+.level-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.level-list li:last-child {
+  margin-bottom: 0;
+}
+
+.level-icon {
+  flex-shrink: 0;
+  font-size: 22px;
+  color: var(--ds-accent);
+  line-height: 1.2;
 }
 </style>

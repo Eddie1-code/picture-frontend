@@ -1,0 +1,752 @@
+/**
+ * 暖灰意式高级感：石灰、燕麦、青铜强调色；纸感纹理与柔和动效。
+ */
+:root {
+  --ds-bg-page: #ebe6e0;
+  --ds-bg-elevated: #f7f4f0;
+  --ds-bg-subtle: #f0ebe6;
+  --ds-card-face: linear-gradient(165deg, #faf8f5 0%, #f3efe9 55%, #ebe4dc 100%);
+  --ds-border-subtle: rgba(44, 40, 37, 0.08);
+  --ds-border-strong: rgba(44, 40, 37, 0.14);
+  --ds-text-primary: #2c2825;
+  --ds-text-secondary: #6b6560;
+  --ds-text-muted: #9c9590;
+  --ds-accent: #8b7355;
+  --ds-accent-deep: #6d5a43;
+  --ds-accent-soft: rgba(139, 115, 85, 0.12);
+  --ds-accent-glow: rgba(139, 115, 85, 0.22);
+  --ds-radius-sm: 8px;
+  --ds-radius-md: 12px;
+  --ds-radius-lg: 16px;
+  --ds-radius-xl: 22px;
+  --ds-shadow-sm: 0 1px 2px rgba(44, 40, 37, 0.06);
+  --ds-shadow-md: 0 10px 32px rgba(44, 40, 37, 0.09);
+  --ds-shadow-lg: 0 22px 56px rgba(44, 40, 37, 0.12);
+  --ds-header-height: 64px;
+  --ds-footer-height: 52px;
+  --ds-content-max: 1320px;
+  /* 无外链字体：与 index.html 一致，避免对 Google Fonts 的依赖 */
+  --ds-font-sans:
+    'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
+  --ds-font-display: 'Songti SC', 'Noto Serif SC', 'STSong', Georgia, 'Times New Roman', serif;
+  /* 细腻亚麻 / 噪点叠层（卡片内与面板） */
+  --ds-card-texture: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 42%,
+      rgba(139, 115, 85, 0.04) 100%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(44, 40, 37, 0.018) 0 1px,
+      transparent 1px 36px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(44, 40, 37, 0.015) 0 1px,
+      transparent 1px 40px
+    );
+  --ds-noise-layer: radial-gradient(
+      circle at 20% 30%,
+      rgba(255, 255, 255, 0.25) 0,
+      transparent 45%
+    ),
+    radial-gradient(circle at 80% 70%, rgba(44, 40, 37, 0.04) 0, transparent 42%);
+  --ds-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ds-ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
+  /* 路由页：先快出、再渐入，总时长更短、更少「空白帧」 */
+  --ds-route-leave: 0.2s;
+  --ds-route-enter: 0.4s;
+  --ds-route-ease-out: cubic-bezier(0.4, 0, 1, 1);
+  --ds-route-ease-in: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  /* 为纵向滚动条预留槽位，避免顶栏右侧与滚动条重叠显得「顶死」 */
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  color: var(--ds-text-primary);
+  background: var(--ds-bg-page);
+  background-image: var(--ds-card-texture);
+  font-family: var(--ds-font-sans);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--ds-accent-deep);
+}
+
+/* 路由级页面切换：淡出快、新页轻上移 + 叠化，避免长时间 out-in 空白感 */
+.route-page-enter-active {
+  transition:
+    opacity var(--ds-route-enter) var(--ds-route-ease-in),
+    transform var(--ds-route-enter) var(--ds-route-ease-in);
+  will-change: opacity, transform;
+}
+
+.route-page-leave-active {
+  transition: opacity var(--ds-route-leave) var(--ds-route-ease-out);
+  will-change: opacity;
+}
+
+.route-page-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+}
+
+.route-page-enter-to {
+  transform: translate3d(0, 0, 0);
+}
+
+.route-page-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-page-enter-active,
+  .route-page-leave-active {
+    transition-duration: 0.01ms !important;
+  }
+
+  .route-page-enter-from {
+    transform: none;
+  }
+}
+
+/* 列表内局部过渡（若仍使用） */
+.ds-soft-enter-active,
+.ds-soft-leave-active {
+  transition:
+    opacity 0.32s var(--ds-route-ease-in),
+    transform 0.32s var(--ds-route-ease-in);
+}
+
+.ds-soft-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+}
+
+.ds-soft-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -4px, 0);
+}
+
+/* 纸感面板（登录/注册等） */
+.ds-texture-panel {
+  background: var(--ds-card-face);
+  background-image: var(--ds-card-texture), var(--ds-card-face);
+  position: relative;
+}
+
+.ds-texture-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.45;
+  background-image: var(--ds-noise-layer);
+}
+
+.ds-inner-card {
+  padding: 16px 18px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle);
+  background: rgba(255, 255, 255, 0.35);
+  background-image: var(--ds-card-texture);
+  box-shadow: var(--ds-shadow-sm);
+}
+
+/* —— 路由页统一留白与最大宽度（对齐「兑换会员 / 创建图片」） —— */
+.ds-page {
+  max-width: var(--ds-content-max);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 28px) 48px;
+  box-sizing: border-box;
+}
+
+.ds-page--narrow {
+  max-width: 1040px;
+}
+
+.ds-page--auth {
+  max-width: 440px;
+  padding-top: 20px;
+}
+
+/* 页头：眉题 + 大标题 + 导语 */
+.ds-page-hero {
+  text-align: center;
+  margin-bottom: 28px;
+  padding: 8px clamp(8px, 2vw, 24px) 0;
+}
+
+.ds-hero-eyebrow {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ds-accent-deep);
+  background: var(--ds-accent-soft);
+  border-radius: 999px;
+}
+
+.ds-page-title {
+  margin: 0 0 12px;
+  font-family: var(--ds-font-display);
+  font-size: clamp(1.65rem, 2.8vw, 2.15rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ds-text-primary);
+  line-height: 1.2;
+}
+
+.ds-page-lead {
+  margin: 0 auto;
+  max-width: min(720px, 94vw);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ds-text-secondary);
+}
+
+/* 首页 / 列表 / 管理页：筛选条（上下内边距对称，与下方表格留白充足） */
+.ds-filter-panel {
+  margin-bottom: 32px;
+  padding: 14px 18px 16px;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-border-subtle);
+  background: rgba(255, 255, 255, 0.42);
+  background-image: var(--ds-card-texture);
+  box-shadow: var(--ds-shadow-sm);
+}
+
+/* ---------- 管理后台：筛选条（单行控件 + 右侧操作，字体与圆角统一） ---------- */
+.ds-admin-filter-bar {
+  margin-bottom: 18px;
+  padding: 12px 14px 13px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle);
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 1px 3px rgba(44, 40, 37, 0.05);
+  font-family: var(--ds-font-sans);
+  font-size: 14px;
+}
+
+.ds-admin-filter-bar__inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+  min-width: 0;
+  /* 窄屏不拆行到「按钮单独一行」：允许横向轻滚动 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.ds-admin-filter-bar .ant-form-item {
+  margin-bottom: 0 !important;
+  flex-shrink: 0;
+}
+
+.ds-admin-filter-bar__field .ant-form-item-label {
+  padding-bottom: 0 !important;
+}
+
+.ds-admin-filter-bar__field .ant-form-item-label > label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-secondary);
+  height: auto;
+  line-height: 32px;
+}
+
+.ds-admin-filter-bar .ant-input,
+.ds-admin-filter-bar .ant-input-affix-wrapper,
+.ds-admin-filter-bar .ant-select .ant-select-selector {
+  font-size: 13px !important;
+  border-radius: var(--ds-radius-sm) !important;
+}
+
+.ds-admin-filter-bar .ant-select-multiple .ant-select-selector {
+  border-radius: var(--ds-radius-sm) !important;
+}
+
+.ds-admin-filter-bar__input {
+  width: 132px;
+}
+
+.ds-admin-filter-bar__input--md {
+  width: 148px;
+}
+
+.ds-admin-filter-bar__input--wide {
+  width: 160px;
+}
+
+.ds-admin-filter-bar__select {
+  min-width: 128px;
+  width: 128px;
+}
+
+.ds-admin-filter-bar__select--md {
+  min-width: 136px;
+  width: 136px;
+}
+
+.ds-admin-filter-bar__select--tags {
+  min-width: 168px;
+  width: 168px;
+}
+
+.ds-admin-filter-bar__ops {
+  margin-left: auto !important;
+  flex-shrink: 0;
+}
+
+.ds-admin-filter-bar__ops .ant-form-item-control-input {
+  min-height: auto;
+}
+
+.ds-admin-filter-bar__btn-reset.ant-btn-default {
+  border-color: rgba(139, 115, 85, 0.35);
+  color: var(--ds-text-secondary);
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: var(--ds-radius-sm);
+  font-size: 13px;
+  font-family: var(--ds-font-sans);
+}
+
+.ds-admin-filter-bar__btn-reset.ant-btn-default:hover {
+  border-color: var(--ds-accent);
+  color: var(--ds-accent-deep);
+}
+
+.ds-admin-filter-bar__btn-submit.ant-btn-primary {
+  min-width: 76px;
+  border-radius: var(--ds-radius-sm);
+  font-size: 13px;
+  font-family: var(--ds-font-sans);
+  box-shadow: 0 2px 8px rgba(139, 115, 85, 0.2);
+}
+
+@media (max-width: 768px) {
+  .ds-admin-filter-bar__inner {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .ds-admin-filter-bar__ops {
+    margin-left: 0 !important;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ds-admin-filter-bar__input,
+  .ds-admin-filter-bar__input--md,
+  .ds-admin-filter-bar__input--wide,
+  .ds-admin-filter-bar__select,
+  .ds-admin-filter-bar__select--md,
+  .ds-admin-filter-bar__select--tags {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* 详情页 Ant Card 统一圆角边框 */
+.ds-surface-card.ant-card {
+  border-radius: var(--ds-radius-lg) !important;
+  border: 1px solid var(--ds-border-subtle) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  background-image: var(--ds-card-texture) !important;
+  box-shadow: var(--ds-shadow-sm) !important;
+}
+
+.ds-surface-card.ant-card .ant-card-head {
+  border-bottom: 1px solid var(--ds-border-subtle);
+  font-weight: 600;
+  color: var(--ds-text-primary);
+}
+
+/* 分页：微弹性与阻尼感 */
+.ds-pagination-bar :deep(.ant-pagination-item),
+.ds-pagination-bar :deep(.ant-pagination-prev),
+.ds-pagination-bar :deep(.ant-pagination-next),
+.ds-pagination-bar :deep(.ant-pagination-jump-prev),
+.ds-pagination-bar :deep(.ant-pagination-jump-next) {
+  transition:
+    transform 0.42s var(--ds-ease-spring),
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.ds-pagination-bar :deep(.ant-pagination-item:hover),
+.ds-pagination-bar :deep(.ant-pagination-prev:hover),
+.ds-pagination-bar :deep(.ant-pagination-next:hover) {
+  transform: translateY(-1px);
+}
+
+.ds-pagination-bar :deep(.ant-pagination-item:active),
+.ds-pagination-bar :deep(.ant-pagination-prev:active),
+.ds-pagination-bar :deep(.ant-pagination-next:active) {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.12s;
+}
+
+.ds-pagination-bar :deep(.ant-select-selector) {
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.35s var(--ds-ease-spring) !important;
+}
+
+/* ---------- 管理后台列表：与「图片管理」表格数据层一致 ---------- */
+.ds-admin-table-shell {
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-border-subtle);
+  background: rgba(255, 255, 255, 0.55);
+  background-image: var(--ds-card-texture);
+  box-shadow: var(--ds-shadow-sm);
+  overflow: hidden;
+}
+
+.ds-admin-table-shell .ant-table {
+  background: transparent;
+}
+
+.ds-admin-data-table .ant-table {
+  font-size: 13px;
+}
+
+.ds-admin-data-table .ant-table-thead > tr > th {
+  font-weight: 600;
+  background: var(--ds-bg-elevated) !important;
+  color: var(--ds-text-primary);
+}
+
+.ds-admin-data-table .ant-table-tbody > tr > td {
+  border-color: var(--ds-border-subtle);
+}
+
+/* 数据单元格工具类（表格内外皆可复用） */
+.ds-cell-id {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+  color: var(--ds-text-secondary);
+  cursor: default;
+}
+
+.ds-cell-strong {
+  font-weight: 500;
+  color: var(--ds-text-primary);
+}
+
+.ds-cell-time {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-text-secondary);
+}
+
+.ds-cell-muted {
+  color: var(--ds-text-muted);
+}
+
+/* 统一筛选标签文案样式（如：关键词：分类：按颜色搜索：） */
+.ds-filter-inline-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-secondary);
+  line-height: 32px;
+  white-space: nowrap;
+}
+
+.ds-cell-pic-info {
+  line-height: 1.4;
+  text-align: left;
+}
+
+.ds-cell-pic-main {
+  font-weight: 500;
+  color: var(--ds-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-cell-pic-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ds-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-tag-compact.ant-tag {
+  margin: 0 !important;
+  font-size: 12px !important;
+  line-height: 20px !important;
+  padding: 0 6px !important;
+  border-radius: 4px !important;
+}
+
+.ds-cell-actions-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ---------- 管理页：标题区快捷操作（纸感条 + 圆角药丸按钮） ---------- */
+.ds-manage-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 12px;
+  margin: 22px auto 0;
+  max-width: min(780px, 96vw);
+  padding: 12px 18px;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-border-subtle);
+  background: rgba(255, 255, 255, 0.45);
+  background-image: var(--ds-card-texture);
+  box-shadow: var(--ds-shadow-sm);
+}
+
+.ds-manage-actions-bar .ant-btn {
+  border-radius: 999px !important;
+  font-weight: 500;
+  font-size: 13px;
+  height: 36px !important;
+  padding: 0 18px !important;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.25s var(--ds-ease-spring),
+    border-color 0.2s ease;
+}
+
+.ds-manage-actions-bar .ant-btn-primary {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(139, 115, 85, 0.22);
+}
+
+.ds-manage-actions-bar .ant-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(139, 115, 85, 0.28);
+}
+
+.ds-manage-actions-bar .ant-btn.ant-btn-background-ghost,
+.ds-manage-actions-bar .ant-btn-default {
+  border-color: rgba(139, 115, 85, 0.32) !important;
+  color: var(--ds-accent-deep) !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+}
+
+.ds-manage-actions-bar .ant-btn.ant-btn-background-ghost:hover,
+.ds-manage-actions-bar .ant-btn-default:hover {
+  border-color: var(--ds-accent) !important;
+  color: var(--ds-accent-deep) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  transform: translateY(-1px);
+}
+
+/* ---------- 管理表格：行内操作（链接式，轻量） ---------- */
+.ds-table-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.ds-table-actions--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 4px;
+}
+
+.ds-table-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 2px;
+}
+
+.ds-table-actions-row--review {
+  gap: 4px 12px;
+}
+
+.ds-table-actions-sep {
+  color: var(--ds-text-muted);
+  opacity: 0.65;
+  user-select: none;
+  font-size: 12px;
+  padding: 0 2px;
+}
+
+.ds-table-actions .ant-btn-link {
+  padding: 0 6px !important;
+  height: auto !important;
+  min-height: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ds-act-link-muted {
+  color: var(--ds-text-secondary) !important;
+}
+
+.ds-act-link-accent {
+  color: var(--ds-accent-deep) !important;
+}
+
+.ds-act-link-success {
+  color: #3d7a1f !important;
+}
+
+.ds-act-link-success:hover {
+  color: #52c41a !important;
+}
+
+/* ---------- 管理列表：表格 + 批量操作（与表头连成一体，选中时出现） ---------- */
+.ds-admin-list-stack {
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-border-subtle);
+  background: rgba(255, 255, 255, 0.55);
+  background-image: var(--ds-card-texture);
+  box-shadow: var(--ds-shadow-sm);
+  /* 勿用 overflow:hidden，否则子元素 position:sticky 无法相对视口吸顶 */
+  overflow: visible;
+}
+
+.ds-admin-table-shell.ds-admin-table-shell--in-stack {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  background-image: none;
+  border-radius: var(--ds-radius-lg);
+  overflow: hidden;
+}
+
+/* 有批量条时：表格区只负责底部圆角（由页面根节点加 class --batch-open） */
+.ds-admin-list-stack--batch-open .ds-admin-table-shell--in-stack {
+  border-radius: 0 0 var(--ds-radius-lg) var(--ds-radius-lg);
+}
+
+.ds-admin-batch-strip {
+  position: sticky;
+  top: var(--ds-header-height);
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  padding: 10px 16px 11px;
+  border-radius: var(--ds-radius-lg) var(--ds-radius-lg) 0 0;
+  background: linear-gradient(
+    180deg,
+    rgba(139, 115, 85, 0.1) 0%,
+    rgba(247, 244, 240, 0.94) 72%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--ds-border-subtle);
+  box-shadow: 0 1px 0 rgba(44, 40, 37, 0.04);
+}
+
+.ds-admin-batch-strip__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.ds-admin-batch-strip__icon {
+  font-size: 17px;
+  color: var(--ds-accent);
+  flex-shrink: 0;
+}
+
+.ds-admin-batch-strip__label {
+  font-size: 13px;
+  color: var(--ds-text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.ds-admin-batch-strip__label strong {
+  color: var(--ds-text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-admin-batch-strip__divider.ant-divider-vertical {
+  margin: 0 !important;
+  top: 0 !important;
+  height: 14px !important;
+  border-color: var(--ds-border-strong) !important;
+}
+
+.ds-admin-batch-strip__clear.ant-btn-link {
+  padding: 0 4px !important;
+  height: auto !important;
+  font-size: 13px;
+  color: var(--ds-text-muted) !important;
+}
+
+.ds-admin-batch-strip__clear.ant-btn-link:hover {
+  color: var(--ds-accent-deep) !important;
+}
+
+.ds-admin-batch-strip__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ds-batch-slide-enter-active,
+.ds-batch-slide-leave-active {
+  transition:
+    opacity 0.22s var(--ds-ease-out-expo),
+    transform 0.24s var(--ds-ease-out-expo);
+}
+
+.ds-batch-slide-enter-from,
+.ds-batch-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}

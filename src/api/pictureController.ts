@@ -282,6 +282,24 @@ export async function uploadPictureByBatchUsingPost(
   })
 }
 
+/** previewBatchFetch POST /api/picture/upload/batch/preview */
+export async function previewBatchFetchUsingPost(
+  body: API.PictureBatchFetchPreviewRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseListPictureBatchFetchCandidateVO_>(
+    '/api/picture/upload/batch/preview',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: body,
+      ...(options || {}),
+    }
+  )
+}
+
 /** uploadPictureByUrl POST /api/picture/upload/url */
 export async function uploadPictureByUrlUsingPost(
   body: API.PictureUploadRequest,

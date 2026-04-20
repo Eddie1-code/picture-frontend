@@ -1,58 +1,54 @@
 <template>
-  <div id="spaceDetailPage">
-    <!-- 空间信息 -->
-    <a-flex justify="space-between">
-      <h2>{{ space.spaceName }}（{{ SPACE_TYPE_MAP[space.spaceType] }}）</h2>
-      <a-space size="middle">
-        <a-button
-          v-if="canUploadPicture"
-          type="primary"
-          @click="goToAddPicture"
-        >
-          + 创建图片
-        </a-button>
-        <a-button
-          v-if="canManageSpaceUser"
-          type="primary"
-          ghost
-          :icon="h(TeamOutlined)"
-          @click="goToSpaceUserManage"
-        >
-          成员管理
-        </a-button>
-        <a-button
-          v-if="canManageSpaceUser"
-          type="primary"
-          ghost
-          :icon="h(BarChartOutlined)"
-          @click="goToSpaceAnalyze"
-        >
-          空间分析
-        </a-button>
-        <a-button :icon="h(EditOutlined)" v-if="canEditPicture" @click="doBatchEdit">
-          批量编辑</a-button
-        >
-        <a-tooltip
-          :title="`占用空间 ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`"
-        >
-          <a-progress
-            type="circle"
-            :percent="((space.totalSize * 100) / space.maxSize).toFixed(1)"
-            :size="42"
-          />
-          <!--            :percent="(((space.totalSize ?? 0) * 100) / (space.maxSize ?? 1)).toFixed(1)"-->
-        </a-tooltip>
-      </a-space>
-    </a-flex>
-    <div style="margin-bottom: 16px"></div>
-    <!-- 搜索表单 -->
-    <PictureSearchForm :onSearch="onSearch" />
-    <!-- 按颜色搜索 -->
-    <a-form-item label="按颜色搜索" style="margin-top: 16px">
-      <color-picker format="hex" @pureColorChange="onColorChange" />
-    </a-form-item>
+  <div id="spaceDetailPage" class="ds-page">
+    <section class="space-head ds-texture-panel" aria-label="空间信息与操作">
+      <div class="space-head__main">
+        <p class="ds-hero-eyebrow">图库空间</p>
+        <h1 class="ds-page-title space-head__title">{{ space.spaceName }}（{{ SPACE_TYPE_MAP[space.spaceType] }}）</h1>
+      </div>
+      <div class="space-head__actions">
+        <a-space size="middle" wrap>
+          <a-button v-if="canUploadPicture" type="primary" size="large" @click="goToAddPicture">
+            + 创建图片
+          </a-button>
+          <a-button
+            v-if="canManageSpaceUser && isTeamSpace"
+            type="primary"
+            ghost
+            size="large"
+            :icon="h(TeamOutlined)"
+            @click="goToSpaceUserManage"
+          >
+            成员管理
+          </a-button>
+          <a-button
+            v-if="canManageSpaceUser"
+            type="primary"
+            ghost
+            size="large"
+            :icon="h(BarChartOutlined)"
+            @click="goToSpaceAnalyze"
+          >
+            空间分析
+          </a-button>
+          <a-tooltip :title="`占用空间 ${formatSize(space.totalSize)} / ${formatSize(space.maxSize)}`">
+            <a-progress
+              type="circle"
+              :percent="((space.totalSize * 100) / space.maxSize).toFixed(1)"
+              :size="42"
+            />
+          </a-tooltip>
+        </a-space>
+      </div>
+    </section>
 
-    <div style="margin-bottom: 16px"></div>
+    <div class="ds-filter-panel space-filters">
+      <PictureSearchForm :onSearch="onSearch" />
+      <div class="space-color-row">
+        <span class="ds-filter-inline-label">按颜色搜索：</span>
+        <color-picker format="hex" @pureColorChange="onColorChange" />
+      </div>
+    </div>
+
     <!-- 图片列表 -->
     <PictureList
       :dataList="dataList"
@@ -63,18 +59,13 @@
       :onReload="fetchData"
     />
     <a-pagination
+      class="ds-pagination-bar space-pagination"
       style="text-align: right"
       v-model:current="searchParams.current"
       v-model:pageSize="searchParams.pageSize"
       :total="total"
       :show-total="() => `图片总数 ${total} / ${space.maxCount}`"
       @change="onPageChange"
-    />
-    <BatchEditPictureModal
-      ref="batchEditPictureModalRef"
-      :spaceId="id"
-      :pictureList="dataList"
-      :onSuccess="onBatchEditPictureSuccess"
     />
   </div>
 </template>
@@ -93,9 +84,8 @@ import PictureList from '@/components/PictureList.vue'
 import PictureSearchForm from '@/components/PictureSearchForm.vue'
 import { ColorPicker } from 'vue3-colorpicker'
 import 'vue3-colorpicker/style.css'
-import BatchEditPictureModal from '@/components/BatchEditPictureModal.vue'
-import { BarChartOutlined, EditOutlined, TeamOutlined } from '@ant-design/icons-vue'
-import { SPACE_PERMISSION_ENUM, SPACE_TYPE_MAP } from '../constants/space.ts'
+import { BarChartOutlined, TeamOutlined } from '@ant-design/icons-vue'
+import { SPACE_PERMISSION_ENUM, SPACE_TYPE_ENUM, SPACE_TYPE_MAP } from '../constants/space.ts'
 import { useRoute, useRouter } from 'vue-router'
 import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 
@@ -122,6 +112,7 @@ const canManageSpaceUser = createPermissionChecker(SPACE_PERMISSION_ENUM.SPACE_U
 const canUploadPicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_UPLOAD)
 const canEditPicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_EDIT)
 const canDeletePicture = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_DELETE)
+const isTeamSpace = computed(() => Number(space.value.spaceType) === SPACE_TYPE_ENUM.TEAM)
 
 // region  获取空间详情相关
 const fetchSpaceDetail = async () => {
@@ -245,20 +236,6 @@ const onColorChange = async (color: string) => {
   loading.value = false
 }
 
-// 分享弹窗引用
-const batchEditPictureModalRef = ref()
-
-// 批量编辑成功后，刷新数据
-const onBatchEditPictureSuccess = () => {
-  fetchData()
-}
-// 打开批量编辑弹窗
-const doBatchEdit = () => {
-  if (batchEditPictureModalRef.value) {
-    batchEditPictureModalRef.value.openModal()
-  }
-}
-
 // 使用同标签页跳转，避免 sessionStorage 隔离导致新标签页丢失 token
 const goToSpaceUserManage = () => {
   go(`/spaceUserManage/${props.id}`)
@@ -291,5 +268,65 @@ watch(
 
 <style scoped>
 #spaceDetailPage {
+  padding-bottom: 40px;
+}
+
+.space-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding: 22px 24px;
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid var(--ds-border-subtle);
+  box-shadow: var(--ds-shadow-md);
+  position: relative;
+}
+
+.space-head > * {
+  position: relative;
+  z-index: 1;
+}
+
+.space-head__main {
+  text-align: left;
+  min-width: min(100%, 260px);
+}
+
+.space-head__main :deep(.ds-hero-eyebrow) {
+  margin-bottom: 8px;
+}
+
+.space-head__title {
+  margin-bottom: 0 !important;
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+}
+
+.space-head__actions {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  min-width: min(100%, 200px);
+}
+
+.space-color-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.space-color-row :deep(.vc-colorPicker__record .text) {
+  display: none;
+}
+
+.space-color-row :deep(.vc-color-wrap) {
+  margin-right: 0;
+}
+
+.space-pagination {
+  margin-top: 20px;
 }
 </style>
