@@ -2,7 +2,7 @@
   <div id="userRegisterPage" class="ds-page ds-page--auth">
     <header class="ds-page-hero">
       <p class="ds-hero-eyebrow">创建账户</p>
-      <h1 class="ds-page-title">加入云图库</h1>
+      <h1 class="ds-page-title">加入栖图</h1>
       <p class="ds-page-lead">分步填写信息；头像可在注册完成后于个人中心随时上传。</p>
     </header>
 

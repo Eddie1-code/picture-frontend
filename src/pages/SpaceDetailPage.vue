@@ -42,11 +42,7 @@
     </section>
 
     <div class="ds-filter-panel space-filters">
-      <PictureSearchForm :onSearch="onSearch" />
-      <div class="space-color-row">
-        <span class="ds-filter-inline-label">按颜色搜索：</span>
-        <color-picker format="hex" @pureColorChange="onColorChange" />
-      </div>
+      <PictureSearchForm :onSearch="onSearch" :onColorSearch="onColorChange" />
     </div>
 
     <!-- 图片列表 -->
@@ -82,8 +78,6 @@ import {
 import { formatSize } from '@/utils'
 import PictureList from '@/components/PictureList.vue'
 import PictureSearchForm from '@/components/PictureSearchForm.vue'
-import { ColorPicker } from 'vue3-colorpicker'
-import 'vue3-colorpicker/style.css'
 import { BarChartOutlined, TeamOutlined } from '@ant-design/icons-vue'
 import { SPACE_PERMISSION_ENUM, SPACE_TYPE_ENUM, SPACE_TYPE_MAP } from '../constants/space.ts'
 import { useRoute, useRouter } from 'vue-router'
@@ -309,21 +303,6 @@ watch(
   display: flex;
   justify-content: flex-end;
   min-width: min(100%, 200px);
-}
-
-.space-color-row {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.space-color-row :deep(.vc-colorPicker__record .text) {
-  display: none;
-}
-
-.space-color-row :deep(.vc-color-wrap) {
-  margin-right: 0;
 }
 
 .space-pagination {

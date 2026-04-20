@@ -139,47 +139,51 @@
           <span class="cell-time">{{ dayjs(record.editTime).format('MM-DD HH:mm') }}</span>
         </template>
         <template v-else-if="column.key === 'action'">
-          <div class="ds-table-actions">
-            <div class="ds-table-actions-row ds-table-actions-row--review">
+          <div class="ds-act-icon-group">
+            <a-tooltip
+              v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.PASS"
+              title="审核通过"
+            >
               <a-button
-                v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.PASS"
-                type="link"
-                size="small"
-                class="ds-act-link-success"
+                class="ds-act-icon ds-act-icon--success"
                 @click="handleReview(record, PIC_REVIEW_STATUS_ENUM.PASS)"
               >
-                通过
+                <template #icon><CheckOutlined /></template>
               </a-button>
-              <a-popconfirm
-                title="确定要拒绝该图片吗？"
-                ok-text="确定"
-                cancel-text="取消"
-                @confirm="handleReview(record, PIC_REVIEW_STATUS_ENUM.REJECT)"
-              >
-                <a-button
-                  v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.REJECT"
-                  type="link"
-                  size="small"
-                  danger
-                >
-                  拒绝
+            </a-tooltip>
+            <a-popconfirm
+              v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.REJECT"
+              title="确定要拒绝该图片吗？"
+              ok-text="确定"
+              cancel-text="取消"
+              @confirm="handleReview(record, PIC_REVIEW_STATUS_ENUM.REJECT)"
+            >
+              <a-tooltip title="拒绝">
+                <a-button class="ds-act-icon ds-act-icon--danger">
+                  <template #icon><StopOutlined /></template>
                 </a-button>
-              </a-popconfirm>
-            </div>
-            <div class="ds-table-actions-row">
-              <a-button type="link" size="small" class="ds-act-link-accent" @click="goToEditPicture(record.id)">
-                编辑
-              </a-button>
-              <span class="ds-table-actions-sep">·</span>
-              <a-popconfirm
-                title="确定要删除该图片吗？"
-                ok-text="确定"
-                cancel-text="取消"
-                @confirm="doDelete(record.id)"
+              </a-tooltip>
+            </a-popconfirm>
+            <a-tooltip title="编辑">
+              <a-button
+                class="ds-act-icon ds-act-icon--primary"
+                @click="goToEditPicture(record.id)"
               >
-                <a-button type="link" size="small" danger>删除</a-button>
-              </a-popconfirm>
-            </div>
+                <template #icon><EditOutlined /></template>
+              </a-button>
+            </a-tooltip>
+            <a-popconfirm
+              title="确定要删除该图片吗？"
+              ok-text="确定"
+              cancel-text="取消"
+              @confirm="doDelete(record.id)"
+            >
+              <a-tooltip title="删除">
+                <a-button class="ds-act-icon ds-act-icon--danger">
+                  <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-tooltip>
+            </a-popconfirm>
           </div>
         </template>
       </template>
@@ -192,7 +196,14 @@
 <script lang="ts" setup>
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import type { TableProps } from 'ant-design-vue'
-import { AppstoreAddOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import {
+  AppstoreAddOutlined,
+  CheckOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  StopOutlined,
+} from '@ant-design/icons-vue'
 import {
   deletePictureUsingPost,
   doPictureReviewUsingPost,
@@ -255,7 +266,7 @@ const columns = [
   { title: '审核信息', dataIndex: 'reviewMessage', width: 200 },
   { title: '创建时间', dataIndex: 'createTime', width: 108 },
   { title: '编辑时间', dataIndex: 'editTime', width: 108 },
-  { title: '操作', key: 'action', width: 168, fixed: 'right' as const, align: 'center' as const },
+  { title: '操作', key: 'action', width: 148, fixed: 'right' as const, align: 'center' as const },
 ]
 
 const dataList = ref<API.Picture[]>([])

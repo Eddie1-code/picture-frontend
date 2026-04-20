@@ -76,6 +76,17 @@
           </a-descriptions>
 
           <div class="picture-detail-actions">
+            <PictureActionBar
+              :picture="picture"
+              :liked="liked"
+              :favorite="favorite"
+              :like-count="likeCount"
+              :favorite-count="favoriteCount"
+              @update:liked="(v) => (liked = v)"
+              @update:favorite="(v) => (favorite = v)"
+              @update:likeCount="(v) => (likeCount = v)"
+              @update:favoriteCount="(v) => (favoriteCount = v)"
+            />
             <a-button type="primary" block class="picture-detail-btn-primary" @click="doDownload">
               <template #icon>
                 <DownloadOutlined />
@@ -106,6 +117,15 @@
         </aside>
       </div>
     </section>
+
+    <!-- 评论区 -->
+    <CommentSection
+      v-if="picture.id"
+      :target-id="picture.id"
+      :target-type="1"
+      :allow-comment="picture.allowComment ?? 1"
+    />
+
     <ShareModal ref="shareModalRef" title="分享图片" :link="shareLink ?? ''" />
   </div>
 </template>
@@ -123,6 +143,8 @@ import {
 import { useRouter } from 'vue-router'
 import { downloadImage, formatSize, toHexColor } from '@/utils'
 import ShareModal from '@/components/ShareModal.vue'
+import PictureActionBar from '@/components/PictureActionBar.vue'
+import CommentSection from '@/components/CommentSection.vue'
 import { SPACE_PERMISSION_ENUM } from '@/constants/space.ts'
 
 interface Props {
@@ -131,6 +153,10 @@ interface Props {
 
 const props = defineProps<Props>()
 const picture = ref<API.PictureVO>({})
+const liked = ref(false)
+const favorite = ref(false)
+const likeCount = ref(0)
+const favoriteCount = ref(0)
 const authorDisplayName = computed(() => {
   return picture.value.user?.userName || (picture.value.userId ? `用户${picture.value.userId}` : '未知用户')
 })
@@ -144,6 +170,10 @@ const fetchPictureDetail = async () => {
     })
     if (res.data.code === 0 && res.data.data) {
       picture.value = res.data.data
+      liked.value = !!res.data.data.isLiked
+      favorite.value = !!res.data.data.isFavorite
+      likeCount.value = res.data.data.likeCount ?? 0
+      favoriteCount.value = res.data.data.favoriteCount ?? 0
     } else {
       message.error('获取图片详情失败，' + res.data.message)
     }

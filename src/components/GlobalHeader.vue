@@ -5,11 +5,19 @@
         <router-link to="/" class="brand-link">
           <div class="title-bar">
             <div class="logo-wrap">
-              <img class="logo" src="../assets/logo.ico" alt="logo" />
+              <BrandLogo :size="32" />
             </div>
             <div class="brand-text">
-              <span class="title">云图库</span>
-              <span class="tagline">发现与收藏</span>
+              <span class="title">
+                <span class="title-zh">栖图</span>
+                <span class="title-dot" aria-hidden="true">·</span>
+                <span class="title-en">Nestpic</span>
+              </span>
+              <span class="tagline">
+                <span class="tagline-en">Where pictures rest</span>
+                <span class="tagline-sep" aria-hidden="true">·</span>
+                <span class="tagline-zh">作品的栖息之地</span>
+              </span>
             </div>
           </div>
         </router-link>
@@ -30,12 +38,17 @@
       <!-- 右侧：账号 / 登录 -->
       <div class="header-cell header-cell--user">
         <template v-if="loginUserStore.loginUser.id">
+          <MessageCenterPopover class="header-social-entry" />
+          <ChatEntry class="header-social-entry" />
           <a-dropdown placement="bottomRight">
             <button type="button" class="user-trigger-inline">
               <a-avatar class="user-avatar" :size="28" :src="loginUserStore.loginUser.userAvatar" />
               <span class="user-name">{{ loginUserStore.loginUser.userName ?? '无名' }}</span>
               <template v-if="loginUserStore.loginUser.userRole == 'vip'">
-                <img class="vip-badge" src="@/assets/vip-icon.jpg" alt="VIP" />
+                <VipBadge class="vip-badge" :size="18" />
+              </template>
+              <template v-else-if="loginUserStore.loginUser.userRole == 'admin'">
+                <AdminBadge class="vip-badge" :size="18" />
               </template>
               <DownOutlined class="user-caret" />
             </button>
@@ -46,11 +59,15 @@
                   <div class="dropdown-meta">
                     <div class="dropdown-name-row">
                       <span class="dropdown-name">{{ loginUserStore.loginUser.userName ?? '无名' }}</span>
-                      <img
+                      <VipBadge
                         v-if="loginUserStore.loginUser.userRole == 'vip'"
                         class="dropdown-vip"
-                        src="@/assets/vip-icon.jpg"
-                        alt="VIP"
+                        :size="16"
+                      />
+                      <AdminBadge
+                        v-else-if="loginUserStore.loginUser.userRole == 'admin'"
+                        class="dropdown-vip"
+                        :size="16"
                       />
                     </div>
                     <span class="dropdown-account">@{{ loginUserStore.loginUser.userAccount || 'user' }}</span>
@@ -65,6 +82,10 @@
                   <button type="button" class="dropdown-action-btn" @click="goMySpace">
                     <HomeOutlined />
                     <span>我的空间</span>
+                  </button>
+                  <button type="button" class="dropdown-action-btn" @click="goMyFavorites">
+                    <StarOutlined />
+                    <span>我的收藏</span>
                   </button>
                   <button type="button" class="dropdown-action-btn dropdown-action-btn--danger" @click="doLogout">
                     <LogoutOutlined />
@@ -88,11 +109,17 @@ import {
   HomeOutlined,
   LogoutOutlined,
   DownOutlined,
+  StarOutlined,
 } from '@ant-design/icons-vue'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import { userLogoutUsingPost } from '@/api/userController.ts'
+import MessageCenterPopover from '@/components/MessageCenterPopover.vue'
+import ChatEntry from '@/components/ChatEntry.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
+import VipBadge from '@/components/VipBadge.vue'
+import AdminBadge from '@/components/AdminBadge.vue'
 
 const loginUserStore = useLoginUserStore()
 
@@ -131,18 +158,15 @@ const originItems = [
     title: '空间管理',
   },
   {
-    key: 'others',
-    label: h('a', { href: 'https://github.com/Eddie1-code', target: '_blank' }, '作者github'),
-    title: '作者github',
+    key: '/about_us',
+    label: '关于我们',
+    title: '关于我们',
   },
 ]
 
 const current = ref<string[]>([''])
 
 const onMenuClick = ({ key }: { key: string }) => {
-  if (key === 'others') {
-    return
-  }
   router.push({
     path: key,
   })
@@ -154,6 +178,10 @@ const goUserCenter = () => {
 
 const goMySpace = () => {
   router.push('/my_space')
+}
+
+const goMyFavorites = () => {
+  router.push('/my_favorites')
 }
 
 const doLogout = async () => {
@@ -172,7 +200,7 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
   return menus?.filter((menu) => {
     const key = menu?.key as string | undefined
     if (!loginUserStore.loginUser?.id) {
-      return key === '/' || key === 'others'
+      return key === '/' || key === '/about_us'
     }
     if (key?.startsWith('/admin')) {
       const loginUser = loginUserStore.loginUser
@@ -235,6 +263,11 @@ router.afterEach((to) => {
   justify-content: flex-end;
   justify-self: end;
   min-width: 0;
+  gap: 4px;
+}
+
+.header-social-entry {
+  flex-shrink: 0;
 }
 
 .brand-link {
@@ -250,24 +283,62 @@ router.afterEach((to) => {
   display: flex;
   align-items: center;
   gap: 14px;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brand-link:hover .title-bar {
+  transform: translateX(1px);
 }
 
 .logo-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--ds-radius-md);
-  background: linear-gradient(145deg, #fff, var(--ds-bg-subtle));
-  border: 1px solid var(--ds-border-subtle);
-  box-shadow: var(--ds-shadow-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  overflow: hidden;
+  transition:
+    background-color 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.logo-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 55%,
+    rgba(139, 115, 85, 0.08) 0%,
+    rgba(139, 115, 85, 0) 70%
+  );
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+}
+
+.brand-link:hover .logo-wrap {
+  background: rgba(255, 252, 247, 0.6);
+  border-color: rgba(139, 115, 85, 0.12);
+}
+
+.brand-link:hover .logo-wrap::after {
+  opacity: 1;
+}
+
+.brand-link:hover .brand-logo {
+  transform: translateY(-1px);
 }
 
 .logo {
   height: 32px;
   width: 32px;
   object-fit: contain;
+  position: relative;
+  z-index: 1;
 }
 
 .brand-text {
@@ -275,20 +346,76 @@ router.afterEach((to) => {
   flex-direction: column;
   align-items: flex-start;
   line-height: 1.15;
+  min-width: 0;
 }
 
 .title {
-  color: var(--ds-text-primary);
-  font-size: 17px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  line-height: 1;
+}
+
+.title-zh {
+  font-family:
+    'PingFang SC',
+    'HarmonyOS Sans SC',
+    'Source Han Sans SC',
+    'Noto Sans SC',
+    'Microsoft YaHei',
+    sans-serif;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
+  background: linear-gradient(120deg, #3a2f21 0%, #6b513a 55%, #8b5a33 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.title-dot {
+  color: var(--ds-accent-deep);
+  font-weight: 700;
+  font-size: 15px;
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.title-en {
+  font-family: 'DM Serif Display', 'Playfair Display', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--ds-accent-deep);
+  text-transform: uppercase;
+  transform: translateY(-1px);
 }
 
 .tagline {
-  font-size: 11px;
-  font-weight: 500;
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  font-size: 10.5px;
   color: var(--ds-text-muted);
-  letter-spacing: 0.02em;
+}
+
+.tagline-en {
+  font-family: 'DM Serif Display', 'Playfair Display', 'Source Serif Pro', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.tagline-sep {
+  opacity: 0.5;
+}
+
+.tagline-zh {
+  font-weight: 500;
+  letter-spacing: 0.14em;
 }
 
 :deep(.top-menu.ant-menu-horizontal) {
@@ -363,10 +490,8 @@ router.afterEach((to) => {
 }
 
 .vip-badge {
-  width: 18px;
-  height: 18px;
+  margin-left: 2px;
   vertical-align: middle;
-  border-radius: 4px;
 }
 
 .login-btn-inline {
@@ -433,9 +558,8 @@ router.afterEach((to) => {
 }
 
 .dropdown-vip {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
+  margin-left: 2px;
+  vertical-align: middle;
 }
 
 .dropdown-account {

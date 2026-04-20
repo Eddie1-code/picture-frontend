@@ -6,6 +6,28 @@
       <p class="ds-page-lead">编辑展示信息与安全设置，头像与昵称将同步到导航与图库展示。</p>
     </header>
 
+    <div v-if="myStat" class="my-social-strip">
+      <button type="button" class="ms-cell" @click="openList('following')">
+        <span class="ms-num">{{ myStat.followCount ?? 0 }}</span>
+        <span class="ms-lb">关注</span>
+      </button>
+      <div class="ms-divider" />
+      <button type="button" class="ms-cell" @click="openList('fans')">
+        <span class="ms-num">{{ myStat.fansCount ?? 0 }}</span>
+        <span class="ms-lb">粉丝</span>
+      </button>
+      <a-button class="ms-link" type="link" @click="goMyProfile">查看我的主页</a-button>
+    </div>
+
+    <FollowListDialog
+      v-if="loginUserStore.loginUser.id"
+      v-model:open="listDialogOpen"
+      :user-id="Number(loginUserStore.loginUser.id)"
+      :initial-type="listDialogType"
+      :follow-count="myStat?.followCount ?? 0"
+      :fans-count="myStat?.fansCount ?? 0"
+    />
+
     <div class="profile-shell ds-texture-panel">
       <div class="profile-grid">
         <aside class="profile-aside">
@@ -85,8 +107,11 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
 import AvatarCropperModal from '@/components/AvatarCropperModal.vue'
+import FollowListDialog from '@/components/FollowListDialog.vue'
 import { getLoginUserUsingGet, updateMyProfileUsingPost } from '@/api/userController'
+import { getFollowStatUsingGet } from '@/api/social.ts'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 
 /** 与库表 `user.userProfile` varchar(512) 一致 */
@@ -121,6 +146,31 @@ onBeforeUnmount(() => {
   resetLocalAvatarPreview()
 })
 
+const router = useRouter()
+const myStat = ref<{ followCount?: number; fansCount?: number } | null>(null)
+const listDialogOpen = ref(false)
+const listDialogType = ref<'following' | 'fans'>('following')
+
+async function fetchMyStat(uid: number) {
+  try {
+    const r = await getFollowStatUsingGet({ userId: uid })
+    if (r.data.code === 0 && r.data.data) myStat.value = r.data.data
+  } catch {
+    /* ignore */
+  }
+}
+
+function openList(t: 'following' | 'fans') {
+  listDialogType.value = t
+  listDialogOpen.value = true
+}
+
+function goMyProfile() {
+  if (loginUserStore.loginUser.id) {
+    router.push(`/user/profile/${loginUserStore.loginUser.id}`)
+  }
+}
+
 onMounted(async () => {
   const res = await getLoginUserUsingGet()
   if (res.data?.data) {
@@ -128,6 +178,7 @@ onMounted(async () => {
     displayUserId.value = String(res.data.data.id ?? '')
     form.value.userPassword = ''
     pendingAvatarUrl.value = ''
+    if (res.data.data.id) fetchMyStat(Number(res.data.data.id))
   }
 })
 
@@ -374,5 +425,44 @@ const copyUserId = async () => {
   height: 42px;
   font-weight: 600;
   border-radius: var(--ds-radius-md);
+}
+
+.my-social-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: var(--ds-radius-lg);
+}
+.ms-cell {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 8px;
+}
+.ms-num {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ds-text-primary);
+  line-height: 1.1;
+}
+.ms-lb {
+  font-size: 12px;
+  color: var(--ds-text-muted);
+  margin-top: 2px;
+}
+.ms-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--ds-border-subtle);
+}
+.ms-link {
+  margin-left: auto;
 }
 </style>

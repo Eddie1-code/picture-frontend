@@ -5,6 +5,18 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseChatMessageVO_ = {
+    code?: number
+    data?: ChatMessageVO
+    message?: string
+  }
+
+  type BaseResponseCommentVO_ = {
+    code?: number
+    data?: CommentVO
+    message?: string
+  }
+
   type BaseResponseCreateOutPaintingTaskResponse_ = {
     code?: number
     data?: CreateOutPaintingTaskResponse
@@ -20,6 +32,30 @@ declare namespace API {
   type BaseResponseInt_ = {
     code?: number
     data?: number
+    message?: string
+  }
+
+  type BaseResponseIPageChatConversationVO_ = {
+    code?: number
+    data?: IPageChatConversationVO_
+    message?: string
+  }
+
+  type BaseResponseIPageChatMessageVO_ = {
+    code?: number
+    data?: IPageChatMessageVO_
+    message?: string
+  }
+
+  type BaseResponseIPageNotifyItemVO_ = {
+    code?: number
+    data?: IPageNotifyItemVO_
+    message?: string
+  }
+
+  type BaseResponseIPageUserFollowVO_ = {
+    code?: number
+    data?: IPageUserFollowVO_
     message?: string
   }
 
@@ -92,6 +128,30 @@ declare namespace API {
   type BaseResponseLong_ = {
     code?: number
     data?: number
+    message?: string
+  }
+
+  type BaseResponseMapStringObject_ = {
+    code?: number
+    data?: Record<string, any>
+    message?: string
+  }
+
+  type BaseResponseNotifyUnreadVO_ = {
+    code?: number
+    data?: NotifyUnreadVO
+    message?: string
+  }
+
+  type BaseResponsePageCommentVO_ = {
+    code?: number
+    data?: PageCommentVO_
+    message?: string
+  }
+
+  type BaseResponsePageFavoriteVO_ = {
+    code?: number
+    data?: PageFavoriteVO_
     message?: string
   }
 
@@ -185,6 +245,93 @@ declare namespace API {
     message?: string
   }
 
+  type ChatConversationVO = {
+    chatType?: number
+    id?: number
+    lastMessage?: string
+    lastMessageTime?: string
+    lastMessageType?: string
+    remarkName?: string
+    targetUser?: UserVO
+    unreadCount?: number
+  }
+
+  type ChatMessageListRequest = {
+    beforeId?: number
+    current?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    targetUserId?: number
+  }
+
+  type ChatMessageVO = {
+    content?: string
+    createTime?: string
+    id?: number
+    messageSize?: number
+    messageType?: string
+    messageUrl?: string
+    pictureId?: number
+    privateChatId?: number
+    receiverId?: number
+    replyId?: number
+    sender?: UserVO
+    senderId?: number
+    status?: number
+  }
+
+  type ChatSendRequest = {
+    clientMsgId?: string
+    content?: string
+    messageSize?: number
+    messageType?: string
+    messageUrl?: string
+    pictureId?: number
+    receiverId?: number
+    replyId?: number
+  }
+
+  type CommentAddRequest = {
+    content?: string
+    parentCommentId?: number
+    replyToUserId?: number
+    rootCommentId?: number
+    targetId?: number
+    targetType?: number
+  }
+
+  type CommentQueryRequest = {
+    current?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    targetId?: number
+    targetType?: number
+  }
+
+  type CommentVO = {
+    childComments?: CommentVO[]
+    childCount?: number
+    commentId?: number
+    content?: string
+    createTime?: string
+    dislikeCount?: number
+    isLiked?: boolean
+    likeCount?: number
+    location?: string
+    parentCommentId?: number
+    replyToUser?: UserVO
+    replyToUserId?: number
+    rootCommentId?: number
+    targetId?: number
+    targetType?: number
+    targetUserId?: number
+    updateTime?: string
+    user?: UserVO
+    userId?: number
+  }
+
   type CreateOutPaintingTaskResponse = {
     code?: string
     message?: string
@@ -199,6 +346,42 @@ declare namespace API {
 
   type DeleteRequest = {
     id?: number
+  }
+
+  type FavoriteActionRequest = {
+    targetId?: number
+    targetType?: number
+  }
+
+  type FavoriteQueryRequest = {
+    current?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    targetType?: number
+  }
+
+  type FavoriteVO = {
+    favoriteRecordId?: number
+    favoriteTime?: string
+    picture?: PictureVO
+    space?: SpaceVO
+    targetId?: number
+    targetType?: number
+  }
+
+  type FollowActionRequest = {
+    follow?: boolean
+    targetUserId?: number
+  }
+
+  type FollowListRequest = {
+    current?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    type?: string
+    userId?: number
   }
 
   type GetOutPaintingTaskResponse = {
@@ -249,6 +432,52 @@ declare namespace API {
     title?: string
   }
 
+  type IPageChatConversationVO_ = {
+    current?: number
+    pages?: number
+    records?: ChatConversationVO[]
+    size?: number
+    total?: number
+  }
+
+  type IPageChatMessageVO_ = {
+    current?: number
+    pages?: number
+    records?: ChatMessageVO[]
+    size?: number
+    total?: number
+  }
+
+  type IPageNotifyItemVO_ = {
+    current?: number
+    pages?: number
+    records?: NotifyItemVO[]
+    size?: number
+    total?: number
+  }
+
+  type IPageUserFollowVO_ = {
+    current?: number
+    pages?: number
+    records?: UserFollowVO[]
+    size?: number
+    total?: number
+  }
+
+  type LikeActionRequest = {
+    targetId?: number
+    targetType?: number
+  }
+
+  type listChildrenUsingGETParams = {
+    /** current */
+    current?: number
+    /** rootCommentId */
+    rootCommentId: number
+    /** size */
+    size?: number
+  }
+
   type LoginUserVO = {
     createTime?: string
     editTime?: string
@@ -263,6 +492,46 @@ declare namespace API {
     vipCode?: string
     vipExpireTime?: string
     vipNumber?: string
+  }
+
+  type markReadUsingPOSTParams = {
+    /** targetUserId */
+    targetUserId: number
+  }
+
+  type NotifyItemVO = {
+    bizId?: number
+    fromUser?: UserVO
+    icon?: string
+    isRead?: boolean
+    notifyTime?: string
+    notifyType?: string
+    relatedBizId?: string
+    relatedBizType?: string
+    targetCover?: string
+    targetId?: number
+    targetTitle?: string
+    targetType?: number
+    text?: string
+    title?: string
+  }
+
+  type NotifyListRequest = {
+    current?: number
+    notifyType?: string
+    onlyUnread?: boolean
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+  }
+
+  type NotifyUnreadVO = {
+    commentCount?: number
+    favoriteCount?: number
+    followCount?: number
+    likeCount?: number
+    systemCount?: number
+    totalCount?: number
   }
 
   type Output = {
@@ -282,6 +551,22 @@ declare namespace API {
     taskStatus?: string
   }
 
+  type PageCommentVO_ = {
+    current?: number
+    pages?: number
+    records?: CommentVO[]
+    size?: number
+    total?: number
+  }
+
+  type PageFavoriteVO_ = {
+    current?: number
+    pages?: number
+    records?: FavoriteVO[]
+    size?: number
+    total?: number
+  }
+
   type PagePicture_ = {
     current?: number
     pages?: number
@@ -296,6 +581,13 @@ declare namespace API {
     records?: PictureVO[]
     size?: number
     total?: number
+  }
+
+  type PageRequest = {
+    current?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
   }
 
   type PageSpace_ = {
@@ -337,12 +629,20 @@ declare namespace API {
   }
 
   type Picture = {
+    allowCollect?: number
+    allowComment?: number
+    allowLike?: number
+    allowShare?: number
     category?: string
+    commentCount?: number
     createTime?: string
     editTime?: string
+    favoriteCount?: number
+    hotScore?: number
     id?: number
     introduction?: string
     isDelete?: number
+    likeCount?: number
     name?: string
     picColor?: string
     picFormat?: string
@@ -354,12 +654,14 @@ declare namespace API {
     reviewStatus?: number
     reviewTime?: string
     reviewerId?: number
+    shareCount?: number
     spaceId?: number
     tags?: string
     thumbnailUrl?: string
     updateTime?: string
     url?: string
     userId?: number
+    viewCount?: number
   }
 
   type PictureBatchFetchCandidateVO = {
@@ -448,11 +750,20 @@ declare namespace API {
   }
 
   type PictureVO = {
+    allowCollect?: number
+    allowComment?: number
+    allowLike?: number
+    allowShare?: number
     category?: string
+    commentCount?: number
     createTime?: string
     editTime?: string
+    favoriteCount?: number
     id?: number
     introduction?: string
+    isFavorite?: boolean
+    isLiked?: boolean
+    likeCount?: number
     name?: string
     permissionList?: string[]
     picColor?: string
@@ -461,6 +772,7 @@ declare namespace API {
     picScale?: number
     picSize?: number
     picWidth?: number
+    shareCount?: number
     spaceId?: number
     tags?: string[]
     thumbnailUrl?: string
@@ -468,6 +780,19 @@ declare namespace API {
     url?: string
     user?: UserVO
     userId?: number
+    viewCount?: number
+  }
+
+  type readAllUsingPOSTParams = {
+    /** notifyType */
+    notifyType: string
+  }
+
+  type readOneUsingPOSTParams = {
+    /** bizId */
+    bizId: number
+    /** notifyType */
+    notifyType: string
   }
 
   type SearchPictureByColorRequest = {
@@ -654,6 +979,11 @@ declare namespace API {
     userId?: number
   }
 
+  type statUsingGETParams = {
+    /** userId */
+    userId: number
+  }
+
   type TaskMetrics = {
     failed?: number
     succeeded?: number
@@ -673,10 +1003,16 @@ declare namespace API {
   }
 
   type User = {
+    allowFollow?: number
+    allowPrivateChat?: number
     createTime?: string
     editTime?: string
     id?: number
     isDelete?: number
+    lastActiveTime?: string
+    personalSign?: string
+    showFansList?: number
+    showFollowList?: number
     updateTime?: string
     userAccount?: string
     userAvatar?: string
@@ -692,6 +1028,18 @@ declare namespace API {
   type UserAddRequest = {
     userAccount?: string
     userAvatar?: string
+    userName?: string
+    userProfile?: string
+    userRole?: string
+  }
+
+  type UserFollowVO = {
+    followTime?: string
+    isFollowed?: boolean
+    isMutual?: boolean
+    personalSign?: string
+    userAvatar?: string
+    userId?: number
     userName?: string
     userProfile?: string
     userRole?: string
@@ -734,7 +1082,12 @@ declare namespace API {
 
   type UserVO = {
     createTime?: string
+    fansCount?: number
+    followCount?: number
     id?: number
+    isFollowed?: boolean
+    isMutualFollow?: boolean
+    personalSign?: string
     updateTime?: string
     userAccount?: string
     userAvatar?: string

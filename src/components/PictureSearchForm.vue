@@ -31,9 +31,22 @@
         </a-form-item>
         <a-form-item class="picture-search-form__ops">
           <a-space :size="8" align="center">
-            <a-button class="picture-search-form__btn" @click="toggleAdvanced">
-              {{ showAdvanced ? '收起高级筛选' : '高级筛选' }}
-            </a-button>
+            <a-tooltip
+              placement="top"
+              :mouse-enter-delay="0.15"
+              :title="showAdvanced ? '收起更多筛选' : '按日期 · 尺寸 · 格式 · 颜色等 7 项条件精细筛选'"
+            >
+              <a-button
+                class="picture-search-form__btn picture-search-form__btn--advanced"
+                :class="{ 'is-active': showAdvanced }"
+                @click="toggleAdvanced"
+              >
+                <FilterOutlined class="adv-icon-leading" />
+                <span>{{ showAdvanced ? '收起' : '高级筛选' }}</span>
+                <span v-if="!showAdvanced" class="adv-count">+7</span>
+                <DownOutlined class="adv-icon-trailing" />
+              </a-button>
+            </a-tooltip>
             <a-button class="picture-search-form__btn" @click="doClear">重置</a-button>
             <a-button type="primary" html-type="submit" class="picture-search-form__btn-primary">搜索</a-button>
           </a-space>
@@ -78,6 +91,25 @@
               class="picture-search-form__format"
             />
           </a-form-item>
+          <a-form-item label="颜色" name="picColor" class="picture-search-form__field picture-search-form__field--color">
+            <div class="picture-search-form__color">
+              <ColorPicker
+                format="hex"
+                v-model:pureColor="colorValue"
+                @pureColorChange="onColorChange"
+              />
+              <a-button
+                v-if="colorValue"
+                size="small"
+                type="link"
+                class="color-clear-btn"
+                @click="clearColor"
+              >
+                清除
+              </a-button>
+              <span v-else class="color-hint">选择颜色后自动按主色筛选</span>
+            </div>
+          </a-form-item>
         </div>
       </transition>
     </a-form>
@@ -89,12 +121,28 @@ import { onMounted, reactive, ref } from 'vue'
 import dayjs from 'dayjs'
 import { listPictureTagCategoryUsingGet } from '@/api/pictureController.ts'
 import { message } from 'ant-design-vue'
+import { DownOutlined, FilterOutlined } from '@ant-design/icons-vue'
+import { ColorPicker } from 'vue3-colorpicker'
+import 'vue3-colorpicker/style.css'
 
 interface Props {
   onSearch?: (searchParams: API.PictureQueryRequest) => void
+  onColorSearch?: (color: string) => void
 }
 
 const props = defineProps<Props>()
+
+// 颜色搜索
+const colorValue = ref<string>('')
+const onColorChange = (color: string) => {
+  if (!color) return
+  props.onColorSearch?.(color)
+}
+const clearColor = () => {
+  colorValue.value = ''
+  // 颜色清空后，回到常规搜索
+  props.onSearch?.(searchParams)
+}
 
 // 图片格式选项
 const picFormatOptions = [
@@ -172,6 +220,7 @@ const doClear = () => {
     searchParams[key] = undefined
   })
   dateRange.value = []
+  colorValue.value = ''
   props.onSearch?.(searchParams)
 }
 
@@ -247,6 +296,96 @@ onMounted(() => {
 
 .picture-search-form__btn-primary {
   min-width: 80px;
+}
+
+/* ==================== 高级筛选按钮（引导版） ==================== */
+.picture-search-form__btn--advanced {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 12px;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.picture-search-form__btn--advanced .adv-icon-leading {
+  font-size: 13px;
+  color: var(--ds-accent, #8b5a33);
+  transition: transform 0.25s ease;
+}
+
+.picture-search-form__btn--advanced:hover .adv-icon-leading {
+  transform: rotate(-8deg);
+}
+
+.picture-search-form__btn--advanced .adv-icon-trailing {
+  font-size: 11px;
+  color: var(--ds-text-muted, rgba(0, 0, 0, 0.45));
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 1px;
+}
+
+.picture-search-form__btn--advanced.is-active .adv-icon-trailing {
+  transform: rotate(180deg);
+  color: var(--ds-accent, #8b5a33);
+}
+
+.picture-search-form__btn--advanced .adv-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ds-accent, #8b5a33);
+  background: rgba(139, 115, 85, 0.1);
+  border-radius: 9px;
+  line-height: 1;
+}
+
+.picture-search-form__btn--advanced:hover {
+  border-color: var(--ds-accent, #8b5a33);
+  color: var(--ds-accent-deep, #6b513a);
+  background: rgba(139, 115, 85, 0.04);
+}
+
+.picture-search-form__btn--advanced.is-active {
+  border-color: var(--ds-accent, #8b5a33);
+  color: var(--ds-accent-deep, #6b513a);
+  background: rgba(139, 115, 85, 0.06);
+}
+
+/* 颜色筛选行 */
+.picture-search-form__field--color {
+  min-width: 240px;
+}
+.picture-search-form__color {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+}
+.picture-search-form__color .color-hint {
+  font-size: 12px;
+  color: var(--ds-text-muted, rgba(0, 0, 0, 0.45));
+}
+.picture-search-form__color .color-clear-btn {
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--ds-accent-deep, #6b513a);
+}
+
+.picture-search-form__color :deep(.vc-colorPicker__record .text) {
+  display: none;
+}
+.picture-search-form__color :deep(.vc-color-wrap) {
+  margin-right: 0;
 }
 
 .picture-search-advanced-enter-active,

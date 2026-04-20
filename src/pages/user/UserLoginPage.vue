@@ -2,8 +2,8 @@
   <div id="userLoginPage" class="ds-page ds-page--auth">
     <header class="ds-page-hero">
       <p class="ds-hero-eyebrow">欢迎回来</p>
-      <h1 class="ds-page-title">登录云图库</h1>
-      <p class="ds-page-lead">企业级智能协同云图库，安全存储与分享你的素材。</p>
+      <h1 class="ds-page-title">登录栖图</h1>
+      <p class="ds-page-lead">Where pictures rest · 作品的栖息之地，安静存放每一帧灵感。</p>
     </header>
 
     <div class="login-card ds-texture-panel">

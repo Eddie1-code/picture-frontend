@@ -50,9 +50,20 @@
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
         </template>
         <template v-else-if="column.key === 'action'">
-          <a-space wrap>
-            <a-button type="link" danger @click="doDelete(record.id)">删除</a-button>
-          </a-space>
+          <div class="ds-act-icon-group">
+            <a-popconfirm
+              title="确定要移除该成员吗？"
+              ok-text="确定"
+              cancel-text="取消"
+              @confirm="doDelete(record.id)"
+            >
+              <a-tooltip title="移除成员">
+                <a-button class="ds-act-icon ds-act-icon--danger">
+                  <template #icon><DeleteOutlined /></template>
+                </a-button>
+              </a-tooltip>
+            </a-popconfirm>
+          </div>
         </template>
       </template>
     </a-table>
@@ -64,7 +75,7 @@ import { h, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { SPACE_ROLE_OPTIONS } from '../../constants/space.ts'
-import { BarChartOutlined } from '@ant-design/icons-vue'
+import { BarChartOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 import {

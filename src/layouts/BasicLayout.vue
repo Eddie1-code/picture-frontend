@@ -4,7 +4,7 @@
       <a-layout-header class="header">
         <GlobalHeader />
       </a-layout-header>
-      <a-layout class="ds-main-row">
+      <a-layout class="ds-main-row" has-sider>
         <GlobalSider class="sider" />
         <a-layout-content class="content">
           <div class="content-inner">
@@ -45,6 +45,9 @@ import GlobalSider from '@/components/GlobalSider.vue'
 
 .ds-main-row {
   min-height: calc(100vh - var(--ds-header-height) - var(--ds-footer-height));
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
 }
 
 #basicLayout .header {
@@ -82,9 +85,9 @@ import GlobalSider from '@/components/GlobalSider.vue'
 }
 
 #basicLayout .sider {
-  background: var(--ds-bg-elevated) !important;
-  padding: 16px 8px 24px;
-  border-right: 1px solid var(--ds-border-subtle);
+  background: transparent !important;
+  padding: 0;
+  border-right: none;
 }
 
 #basicLayout :deep(.ant-menu-root) {

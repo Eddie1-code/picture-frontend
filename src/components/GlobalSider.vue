@@ -1,45 +1,51 @@
 <template>
-  <div id="globalSider">
-    <a-layout-sider
-      v-if="loginUserStore.loginUser.id"
-      v-model:collapsed="collapsed"
-      class="ds-sider"
-      width="240"
-      :collapsed-width="72"
-      collapsible
-      :trigger="null"
+  <div
+    v-if="loginUserStore.loginUser.id"
+    id="globalSider"
+    class="gs-placeholder"
+  >
+    <div
+      class="gs-panel"
+      :class="{ 'is-expanded': expanded, 'is-pinned': pinned }"
+      @mouseenter="onEnter"
+      @mouseleave="onLeave"
     >
       <button
         type="button"
         class="sider-collapse-btn"
-        :aria-expanded="!collapsed"
-        aria-controls="sider-menu"
-        :title="collapsed ? '展开侧栏' : '收起侧栏'"
-        @click="collapsed = !collapsed"
+        :aria-pressed="pinned"
+        :title="pinned ? '取消固定，改为悬停展开' : '固定展开侧栏'"
+        @click="togglePin"
       >
-        <MenuFoldOutlined v-if="!collapsed" />
+        <PushpinFilled v-if="pinned" />
         <MenuUnfoldOutlined v-else />
+        <span v-show="expanded" class="sider-collapse-btn-text">
+          {{ pinned ? '已固定' : '固定展开' }}
+        </span>
       </button>
-      <div class="sider-label">浏览</div>
+
+      <div class="sider-label" :class="{ 'is-hidden': !expanded }">浏览</div>
+
       <a-menu
         id="sider-menu"
         class="side-menu"
         v-model:selectedKeys="current"
         mode="inline"
+        :inline-collapsed="!expanded"
         :items="menuItems"
         @click="doMenuClick"
       />
-    </a-layout-sider>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, h, ref, watch, watchEffect } from 'vue'
+import { computed, h, onUnmounted, ref, watchEffect } from 'vue'
 import {
   FolderOutlined,
-  MenuFoldOutlined,
   MenuUnfoldOutlined,
   PictureOutlined,
+  PushpinFilled,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons-vue'
@@ -49,28 +55,49 @@ import { SPACE_TYPE_ENUM } from '@/constants/space.ts'
 import { listMyTeamSpaceUsingPost } from '@/api/spaceUserController.ts'
 import { message } from 'ant-design-vue'
 
-const SIDER_COLLAPSE_KEY = 'picture-sider-collapsed'
+const SIDER_PINNED_KEY = 'picture-sider-pinned'
 
 const loginUserStore = useLoginUserStore()
-
 const router = useRouter()
 
-function readSiderCollapsed(): boolean {
-  if (typeof localStorage === 'undefined') {
-    return false
-  }
-  const raw = localStorage.getItem(SIDER_COLLAPSE_KEY)
-  return raw === '1'
+function readPinned(): boolean {
+  if (typeof localStorage === 'undefined') return false
+  return localStorage.getItem(SIDER_PINNED_KEY) === '1'
 }
 
-const collapsed = ref(readSiderCollapsed())
-watch(collapsed, (v) => {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(SIDER_COLLAPSE_KEY, v ? '1' : '0')
+const pinned = ref(readPinned())
+const hovered = ref(false)
+let leaveTimer: number | null = null
+
+const expanded = computed(() => pinned.value || hovered.value)
+
+function onEnter() {
+  if (leaveTimer) {
+    clearTimeout(leaveTimer)
+    leaveTimer = null
   }
+  hovered.value = true
+}
+
+function onLeave() {
+  if (leaveTimer) clearTimeout(leaveTimer)
+  leaveTimer = window.setTimeout(() => {
+    hovered.value = false
+    leaveTimer = null
+  }, 150)
+}
+
+function togglePin() {
+  pinned.value = !pinned.value
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(SIDER_PINNED_KEY, pinned.value ? '1' : '0')
+  }
+}
+
+onUnmounted(() => {
+  if (leaveTimer) clearTimeout(leaveTimer)
 })
 
-// 固定的菜单列表
 const fixedMenuItems = [
   {
     key: '/',
@@ -89,14 +116,11 @@ const fixedMenuItems = [
   },
 ]
 
-// 团队空间列表
 const teamSpaceList = ref<API.SpaceUserVO[]>([])
 const menuItems = computed(() => {
-  // 没有团队空间，只展示固定菜单
   if (teamSpaceList.value.length < 1) {
-    return fixedMenuItems;
+    return fixedMenuItems
   }
-  // 展示团队空间分组
   const teamSpaceSubMenus = teamSpaceList.value.map((spaceUser) => {
     const space = spaceUser.space
     return {
@@ -114,7 +138,6 @@ const menuItems = computed(() => {
   return [...fixedMenuItems, teamSpaceMenuGroup]
 })
 
-// 加载团队空间列表
 const fetchTeamSpaceList = async () => {
   const res = await listMyTeamSpaceUsingPost()
   if (res.data.code === 0 && res.data.data) {
@@ -124,48 +147,95 @@ const fetchTeamSpaceList = async () => {
   }
 }
 
-/**
- * 监听变量，改变时触发数据的重新加载
- */
 watchEffect(() => {
-  // 登录才加载
   if (loginUserStore.loginUser.id) {
     fetchTeamSpaceList()
   }
 })
 
-//当前选中的菜单项(高亮显示，默认选中主页)
 const current = ref<string[]>([''])
 
-//监听路由变化，更新高亮菜单项（钩子函数）
 router.afterEach((to) => {
   current.value = [to.path]
 })
 
-//路由跳转事件
-// 路由跳转事件
 const doMenuClick = ({ key }: { key: string }) => {
   router.push(key)
 }
 </script>
 
 <style scoped>
+.gs-placeholder {
+  position: relative;
+  width: 64px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 100%;
+}
+
+.gs-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  background: var(--ds-bg-elevated);
+  border-right: 1px solid var(--ds-border-subtle);
+  padding: 14px 6px 24px;
+  overflow: hidden;
+  z-index: 30;
+  transition:
+    width 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.24s ease,
+    border-color 0.24s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.gs-panel.is-expanded {
+  width: 240px;
+  padding: 14px 8px 24px;
+  box-shadow: 8px 0 28px rgba(45, 33, 20, 0.08);
+  border-right-color: transparent;
+}
+
+.gs-panel.is-pinned.is-expanded {
+  box-shadow: none;
+  border-right-color: var(--ds-border-subtle);
+}
+
 .sider-collapse-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(100% - 8px);
-  margin: 0 4px 8px;
-  height: 36px;
+  gap: 8px;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
+  padding: 0;
   border: 1px solid var(--ds-border-subtle);
   border-radius: var(--ds-radius-sm);
   background: rgba(255, 255, 255, 0.5);
   color: var(--ds-text-secondary);
   cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
   transition:
     background 0.2s ease,
     color 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    width 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+    margin 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+    justify-content 0.24s ease;
+}
+
+.gs-panel.is-expanded .sider-collapse-btn {
+  width: calc(100% - 8px);
+  margin: 0 4px 10px;
+  padding: 0 12px;
+  justify-content: flex-start;
 }
 
 .sider-collapse-btn:hover {
@@ -174,9 +244,15 @@ const doMenuClick = ({ key }: { key: string }) => {
   background: var(--ds-accent-soft);
 }
 
-:deep(.ant-layout-sider-collapsed) .sider-collapse-btn {
-  width: calc(100% - 8px);
-  margin-inline: 4px;
+.sider-collapse-btn-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.gs-panel.is-pinned .sider-collapse-btn {
+  color: var(--ds-accent-deep);
+  border-color: var(--ds-accent-soft);
+  background: var(--ds-accent-soft);
 }
 
 .sider-label {
@@ -185,11 +261,14 @@ const doMenuClick = ({ key }: { key: string }) => {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ds-text-muted);
-  padding: 4px 12px 12px;
-  transition: opacity 0.2s ease;
+  padding: 4px 12px 10px;
+  transition:
+    opacity 0.18s ease,
+    height 0.18s ease,
+    padding 0.18s ease;
 }
 
-:deep(.ant-layout-sider-collapsed) .sider-label {
+.sider-label.is-hidden {
   opacity: 0;
   height: 0;
   padding: 0;
@@ -198,9 +277,11 @@ const doMenuClick = ({ key }: { key: string }) => {
   pointer-events: none;
 }
 
-:deep(.side-menu.ant-menu-inline) {
+:deep(.side-menu.ant-menu-inline),
+:deep(.side-menu.ant-menu-inline-collapsed) {
   border-inline-end: none !important;
   background: transparent !important;
+  width: 100% !important;
 }
 
 :deep(.side-menu .ant-menu-item) {
@@ -233,5 +314,44 @@ const doMenuClick = ({ key }: { key: string }) => {
 
 :deep(.side-menu .ant-menu-item-group .ant-menu-item) {
   padding-left: 36px !important;
+}
+
+/* ============ 折叠态（图标居中，宽度贴合 panel）============ */
+:deep(.side-menu.ant-menu-inline-collapsed) {
+  padding: 0 !important;
+}
+
+:deep(.side-menu.ant-menu-inline-collapsed > .ant-menu-item),
+:deep(.side-menu.ant-menu-inline-collapsed .ant-menu-item-group .ant-menu-item) {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  margin: 4px auto !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+:deep(.side-menu.ant-menu-inline-collapsed .ant-menu-item .anticon) {
+  margin: 0 !important;
+  line-height: 1 !important;
+  font-size: 17px !important;
+}
+
+:deep(.side-menu.ant-menu-inline-collapsed .ant-menu-title-content) {
+  display: none !important;
+}
+
+:deep(.side-menu.ant-menu-inline-collapsed .ant-menu-item-group-title) {
+  display: none !important;
+}
+
+:deep(.side-menu.ant-menu-inline-collapsed .ant-menu-item-group-list) {
+  padding: 0 !important;
 }
 </style>

@@ -638,6 +638,79 @@ a:hover {
   color: #52c41a !important;
 }
 
+/* ==================== 管理列表：图标操作按钮（升级版） ==================== */
+.ds-act-icon-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.ds-act-icon.ant-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  padding: 0 !important;
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--ds-text-secondary);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.ds-act-icon.ant-btn:hover,
+.ds-act-icon.ant-btn:focus {
+  background: rgba(139, 115, 85, 0.08);
+  color: var(--ds-accent-deep);
+  box-shadow: none;
+}
+
+.ds-act-icon.ant-btn:active {
+  transform: scale(0.94);
+  box-shadow: none;
+}
+
+.ds-act-icon--primary.ant-btn {
+  color: var(--ds-accent-deep);
+}
+.ds-act-icon--primary.ant-btn:hover,
+.ds-act-icon--primary.ant-btn:focus {
+  background: rgba(139, 115, 85, 0.14);
+  color: var(--ds-accent-deep);
+}
+
+.ds-act-icon--muted.ant-btn {
+  color: var(--ds-text-muted);
+}
+.ds-act-icon--muted.ant-btn:hover,
+.ds-act-icon--muted.ant-btn:focus {
+  background: rgba(0, 0, 0, 0.045);
+  color: var(--ds-text-secondary);
+}
+
+.ds-act-icon--success.ant-btn {
+  color: #3d7a1f;
+}
+.ds-act-icon--success.ant-btn:hover,
+.ds-act-icon--success.ant-btn:focus {
+  background: rgba(82, 196, 26, 0.12);
+  color: #4c9a1a;
+}
+
+.ds-act-icon--danger.ant-btn {
+  color: #b3422e;
+}
+.ds-act-icon--danger.ant-btn:hover,
+.ds-act-icon--danger.ant-btn:focus {
+  background: rgba(212, 74, 56, 0.1);
+  color: #d4382a;
+}
+
 /* ---------- 管理列表：表格 + 批量操作（与表头连成一体，选中时出现） ---------- */
 .ds-admin-list-stack {
   border-radius: var(--ds-radius-lg);

@@ -82,10 +82,27 @@
             <span class="ds-cell-time">{{ dayjs(record.updateTime).format('MM-DD HH:mm') }}</span>
           </template>
           <template v-else-if="column.key === 'action'">
-            <div class="ds-table-actions ds-table-actions--inline">
-              <a-button type="link" size="small" class="ds-act-link-accent" @click="openEdit(record.id)">编辑</a-button>
-              <span class="ds-table-actions-sep">·</span>
-              <a-button type="link" size="small" danger @click="doDelete(record.id)">删除</a-button>
+            <div class="ds-act-icon-group">
+              <a-tooltip title="编辑">
+                <a-button
+                  class="ds-act-icon ds-act-icon--primary"
+                  @click="openEdit(record.id)"
+                >
+                  <template #icon><EditOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-popconfirm
+                title="确定要删除该用户吗？"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="doDelete(record.id)"
+              >
+                <a-tooltip title="删除">
+                  <a-button class="ds-act-icon ds-act-icon--danger">
+                    <template #icon><DeleteOutlined /></template>
+                  </a-button>
+                </a-tooltip>
+              </a-popconfirm>
             </div>
           </template>
         </template>
@@ -140,6 +157,7 @@ import {
 import { message, Modal } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import AdminBatchStrip from '@/components/AdminBatchStrip.vue'
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons-vue'
 
 function formatIdTooltip(id: string | number | undefined): string {
   if (id == null) return ''
@@ -155,7 +173,7 @@ const columns = [
   { title: '用户角色', dataIndex: 'userRole', width: 104 },
   { title: '创建时间', dataIndex: 'createTime', width: 108 },
   { title: '更新时间', dataIndex: 'updateTime', width: 108 },
-  { title: '操作', key: 'action', width: 120, fixed: 'right' as const, align: 'center' as const },
+  { title: '操作', key: 'action', width: 92, fixed: 'right' as const, align: 'center' as const },
 ]
 
 const dataList = ref<API.UserVO[]>([])

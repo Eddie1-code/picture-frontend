@@ -43,6 +43,18 @@
       </section>
 
       <aside class="space-aside" aria-label="空间级别说明">
+        <!-- 新手引导悬挂小票（仅在「创建」场景展示） -->
+        <div v-if="!route.query?.id" class="welcome-receipt" aria-label="新手引导清单">
+          <ReceiptBoard
+            title="WELCOME TO NESTPIC"
+            subtitle="Getting Started"
+            :items="welcomeItems"
+            footer-text="ENJOY THE JOURNEY"
+            barcode="*START-YOUR-NEST*"
+            :width="260"
+            :height="440"
+          />
+        </div>
         <div class="level-intro ds-inner-card">
           <h3 class="aside-h3">级别说明</h3>
           <p class="aside-note">
@@ -57,10 +69,12 @@
                   :is="icons[levelIconMap[spaceLevel.value]]"
                 />
               </span>
-              <span>
-                <strong>{{ spaceLevel.text }}</strong>
-                ：存储 {{ formatSize(spaceLevel.maxSize) }}，数量上限 {{ spaceLevel.maxCount }}
-              </span>
+              <div class="level-info">
+                <div class="level-name">{{ spaceLevel.text }}</div>
+                <div class="level-desc">
+                  存储 {{ formatSize(spaceLevel.maxSize) }} · 数量上限 {{ spaceLevel.maxCount }}
+                </div>
+              </div>
             </li>
           </ul>
         </div>
@@ -70,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref } from 'vue'
 import { SmileOutlined, CrownOutlined, RocketOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import {
@@ -82,6 +96,19 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import { SPACE_LEVEL_OPTIONS, SPACE_TYPE_ENUM, SPACE_TYPE_MAP } from '@/constants/space.ts'
 import { formatSize } from '../utils'
+
+const ReceiptBoard = defineAsyncComponent(() => import('@/components/ReceiptBoard.vue'))
+
+// 新手引导小票清单（路线 1：真·引导）
+const welcomeItems = [
+  { text: '创建你的第一个空间' },
+  { text: '上传第一张图片' },
+  { text: '为作品打上标签' },
+  { text: '点赞一位创作者' },
+  { text: '关注喜欢的 up 主' },
+  { text: '留下一条真诚评论' },
+  { text: '邀请朋友一起协作' },
+]
 
 const route = useRoute()
 const router = useRouter()
@@ -192,6 +219,19 @@ onMounted(() => {
   align-items: start;
 }
 
+.space-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.welcome-receipt {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+  /* 从顶端延伸下来的留白感 */
+}
+
 @media (max-width: 900px) {
   .space-layout {
     grid-template-columns: 1fr;
@@ -199,6 +239,7 @@ onMounted(() => {
   .space-aside {
     order: -1;
   }
+  /* 窄屏 ReceiptBoard 组件会自动降级为静态 UI */
 }
 
 .space-form-card {
@@ -271,16 +312,14 @@ onMounted(() => {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
-  line-height: 1.55;
   color: var(--ds-text-secondary);
 }
 
 .level-list li {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .level-list li:last-child {
@@ -289,8 +328,30 @@ onMounted(() => {
 
 .level-icon {
   flex-shrink: 0;
-  font-size: 22px;
+  font-size: 20px;
+  line-height: 1;
   color: var(--ds-accent);
-  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.level-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.level-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+.level-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ds-text-muted);
+  word-break: break-all;
 }
 </style>

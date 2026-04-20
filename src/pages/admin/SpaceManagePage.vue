@@ -107,22 +107,34 @@
             <span class="ds-cell-time">{{ dayjs(record.editTime).format('MM-DD HH:mm') }}</span>
           </template>
           <template v-else-if="column.key === 'action'">
-            <div class="ds-table-actions ds-table-actions--inline">
-              <a-button type="link" size="small" class="ds-act-link-accent" @click="goToAnalyzeSpace(record.id)">
-                分析
-              </a-button>
-              <span class="ds-table-actions-sep">·</span>
-              <a-button type="link" size="small" class="ds-act-link-muted" @click="goToEditSpace(record.id)">
-                编辑
-              </a-button>
-              <span class="ds-table-actions-sep">·</span>
+            <div class="ds-act-icon-group">
+              <a-tooltip title="分析">
+                <a-button
+                  class="ds-act-icon ds-act-icon--primary"
+                  @click="goToAnalyzeSpace(record.id)"
+                >
+                  <template #icon><BarChartOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="编辑">
+                <a-button
+                  class="ds-act-icon ds-act-icon--muted"
+                  @click="goToEditSpace(record.id)"
+                >
+                  <template #icon><EditOutlined /></template>
+                </a-button>
+              </a-tooltip>
               <a-popconfirm
                 title="确定要删除该空间吗？"
                 ok-text="确定"
                 cancel-text="取消"
                 @confirm="doDelete(record.id)"
               >
-                <a-button type="link" size="small" danger>删除</a-button>
+                <a-tooltip title="删除">
+                  <a-button class="ds-act-icon ds-act-icon--danger">
+                    <template #icon><DeleteOutlined /></template>
+                  </a-button>
+                </a-tooltip>
               </a-popconfirm>
             </div>
           </template>
@@ -146,7 +158,12 @@ import {
   SPACE_TYPE_OPTIONS,
 } from '@/constants/space.ts'
 import { formatSize } from '@/utils'
-import { BarChartOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import {
+  BarChartOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+} from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
 import { useSafeNavigate } from '@/utils/safeNavigate.ts'
 import AdminBatchStrip from '@/components/AdminBatchStrip.vue'
@@ -202,8 +219,9 @@ const columns = [
   {
     title: '操作',
     key: 'action',
-    width: 104,
+    width: 120,
     fixed: 'right' as const,
+    align: 'center' as const,
   },
 ]
 
