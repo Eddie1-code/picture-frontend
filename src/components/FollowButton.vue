@@ -48,12 +48,13 @@ async function onClick() {
     message.warning('请先登录')
     return
   }
-  if (me === props.targetUserId) return
+  if (String(me) === String(props.targetUserId)) return
   const next = !inner.value
   loading.value = true
   try {
     const res = await toggleFollowUsingPost({
-      targetUserId: props.targetUserId,
+      // 统一按字符串传递，避免 19 位 Long 在 Number 中精度丢失
+      targetUserId: String(props.targetUserId) as unknown as number,
       follow: next,
     })
     if (res.data.code === 0) {

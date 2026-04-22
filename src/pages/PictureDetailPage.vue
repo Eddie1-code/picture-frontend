@@ -39,7 +39,7 @@
               </div>
               <div v-if="showAuthorActions" class="picture-detail-author-actions">
                 <FollowButton
-                  :target-user-id="Number(picture.userId)"
+                  :target-user-id="picture.userId as string"
                   v-model="authorFollowed"
                   :is-mutual="authorMutual"
                   size="small"

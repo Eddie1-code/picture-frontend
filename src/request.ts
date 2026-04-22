@@ -5,6 +5,10 @@ const TAB_TOKEN_KEY = 'satoken_tab_token'
 const TAB_TOKEN_NAME_KEY = 'satoken_tab_token_name'
 const SIGNATURE_SECRET = import.meta.env.VITE_SIGNATURE_SECRET || ''
 const SIGNATURE_ENABLED = (import.meta.env.VITE_SIGNATURE_ENABLED || 'true') === 'true'
+const WEB_CRYPTO_AVAILABLE =
+  typeof window !== 'undefined' &&
+  typeof window.crypto !== 'undefined' &&
+  typeof window.crypto.subtle !== 'undefined'
 const SIGNATURE_PROTECTED_PREFIXES = [
   '/api/user/login',
   '/api/user/register',
@@ -38,7 +42,7 @@ const clearTabToken = () => {
 const textEncoder = new TextEncoder()
 
 const shouldSignPath = (url?: string) => {
-  if (!SIGNATURE_ENABLED || !SIGNATURE_SECRET || !url) {
+  if (!SIGNATURE_ENABLED || !SIGNATURE_SECRET || !WEB_CRYPTO_AVAILABLE || !url) {
     return false
   }
   const path = normalizePath(url)

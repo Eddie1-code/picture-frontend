@@ -68,7 +68,7 @@
         </div>
 
         <div v-if="picture" class="meta-panel ds-inner-card">
-          <a-form layout="vertical" :model="pictureForm" @finish="handleSubmit">
+          <a-form layout="vertical" :model="pictureForm" @finish="handleSubmit" @submit.prevent>
             <a-form-item name="name">
               <template #label>
                 <span class="ds-filter-inline-label">名称：</span>
