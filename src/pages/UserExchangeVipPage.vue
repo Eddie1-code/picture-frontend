@@ -33,7 +33,7 @@
 
         <p class="fine-print">
           兑换即表示您已阅读并同意平台对会员服务的使用说明。如遇问题请联系管理员或查看
-          <a href="https://github.com/Eddie1-code" target="_blank" rel="noreferrer">项目说明</a>。
+          <a href="https://github.com/Eddie1-code/picture-backend#readme" target="_blank" rel="noreferrer">项目说明</a>。
         </p>
       </section>
 
