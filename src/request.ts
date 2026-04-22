@@ -3,6 +3,16 @@ import { message } from 'ant-design-vue'
 
 const TAB_TOKEN_KEY = 'satoken_tab_token'
 const TAB_TOKEN_NAME_KEY = 'satoken_tab_token_name'
+const SIGNATURE_SECRET = import.meta.env.VITE_SIGNATURE_SECRET || ''
+const SIGNATURE_ENABLED = (import.meta.env.VITE_SIGNATURE_ENABLED || 'true') === 'true'
+const SIGNATURE_PROTECTED_PREFIXES = [
+  '/api/user/login',
+  '/api/user/register',
+  '/api/picture/out_painting',
+  '/api/picture/upload',
+  '/api/post/add',
+  '/api/comment/add',
+]
 
 const getTabToken = () => {
   return sessionStorage.getItem(TAB_TOKEN_KEY) || ''
@@ -25,25 +35,126 @@ const clearTabToken = () => {
   sessionStorage.removeItem(TAB_TOKEN_KEY)
 }
 
-// 区分开发和生产环境
-const DEV_BASE_URL = "http://localhost:8123";
-const PROD_BASE_URL = "http://picture.xucanwei.xyz";
+const textEncoder = new TextEncoder()
+
+const shouldSignPath = (url?: string) => {
+  if (!SIGNATURE_ENABLED || !SIGNATURE_SECRET || !url) {
+    return false
+  }
+  const path = normalizePath(url)
+  return SIGNATURE_PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix))
+}
+
+const normalizePath = (url: string) => {
+  if (!url) {
+    return ''
+  }
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      return new URL(url).pathname
+    } catch {
+      return url
+    }
+  }
+  return url
+}
+
+const generateNonce = () => {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+const toHex = (buffer: ArrayBuffer) => {
+  const bytes = new Uint8Array(buffer)
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+const toBase64 = (buffer: ArrayBuffer) => {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
+}
+
+const computeSha256Hex = async (text: string) => {
+  const digest = await crypto.subtle.digest('SHA-256', textEncoder.encode(text))
+  return toHex(digest)
+}
+
+const computeHmacBase64 = async (plainText: string, secret: string) => {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    textEncoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  const signature = await crypto.subtle.sign('HMAC', key, textEncoder.encode(plainText))
+  return toBase64(signature)
+}
+
+const resolveBodyHash = async (config: any) => {
+  const contentType = String(config.headers?.['Content-Type'] || config.headers?.['content-type'] || '')
+  const isJson = contentType.toLowerCase().startsWith('application/json')
+  if (!isJson) {
+    return computeSha256Hex('')
+  }
+  if (config.data === undefined || config.data === null) {
+    return computeSha256Hex('')
+  }
+  if (typeof config.data === 'string') {
+    return computeSha256Hex(config.data)
+  }
+  return computeSha256Hex(JSON.stringify(config.data))
+}
+
+const resolveApiBaseUrl = () => {
+  const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim()
+  if (envBaseUrl) {
+    return envBaseUrl
+  }
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8123'
+  }
+  // 生产默认走同源（由 Nginx / CDN 反代到后端）
+  return ''
+}
+
 // 创建 Axios 实例
 const myAxios = axios.create({
-  baseURL: DEV_BASE_URL,
+  baseURL: resolveApiBaseUrl(),
   timeout: 10000,
   withCredentials: true,
 });
 
 // 全局请求拦截器
 myAxios.interceptors.request.use(
-  function (config) {
+  async function (config) {
     // 每个标签页独立携带 token，避免同浏览器多标签页登录态相互覆盖
     const tabTokenName = getTabTokenName()
     const tabToken = getTabToken()
+    config.headers = config.headers ?? {}
     if (tabTokenName && tabToken) {
-      config.headers = config.headers ?? {}
       config.headers[tabTokenName] = tabToken
+    }
+    if (shouldSignPath(config.url)) {
+      const timestamp = String(Math.floor(Date.now() / 1000))
+      const nonce = generateNonce()
+      const path = normalizePath(config.url || '')
+      const method = String(config.method || 'GET').toUpperCase()
+      const bodyHash = await resolveBodyHash(config)
+      const plainText = `${method}\n${path}\n${timestamp}\n${nonce}\n${bodyHash}`
+      const signature = await computeHmacBase64(plainText, SIGNATURE_SECRET)
+      config.headers['X-Timestamp'] = timestamp
+      config.headers['X-Nonce'] = nonce
+      config.headers['X-Signature'] = signature
     }
     return config
   },

@@ -115,9 +115,9 @@ async function onBeforeUpload(file: File) {
     message.error('只支持图片文件')
     return false
   }
-  const isLt10M = file.size / 1024 / 1024 < 10
-  if (!isLt10M) {
-    message.error('单张图片不能超过 10MB')
+  const isLt3M = file.size / 1024 / 1024 < 3
+  if (!isLt3M) {
+    message.error('单张图片不能超过 3MB')
     return false
   }
   uploadingCount.value += 1

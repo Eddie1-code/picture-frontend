@@ -13,8 +13,7 @@ export default class PictureEditWebSocket {
    * 初始化 WebSocket 连接
    */
   connect() {
-    const DEV_BASE_URL = "ws://localhost:8123";
-    const PROD_BASE_URL = "ws://picture.xucanwei.xyz";
+    const wsBaseUrl = this.resolveWsBaseUrl()
     const tokenName = sessionStorage.getItem('satoken_tab_token_name') || ''
     const tokenValue = sessionStorage.getItem('satoken_tab_token') || ''
     const query = new URLSearchParams({
@@ -27,7 +26,7 @@ export default class PictureEditWebSocket {
       query.set('tokenName', tokenName)
       query.set('tokenValue', tokenValue)
     }
-    const url = `${DEV_BASE_URL}/api/ws/picture/edit?${query.toString()}`
+    const url = `${wsBaseUrl}/api/ws/picture/edit?${query.toString()}`
     this.socket = new WebSocket(url)
 
     // 设置携带 cookie
@@ -60,6 +59,21 @@ export default class PictureEditWebSocket {
       console.error('WebSocket 发生错误:', error)
       this.triggerEvent('error', error)
     }
+  }
+
+  private resolveWsBaseUrl() {
+    const envWsBaseUrl = String(import.meta.env.VITE_WS_BASE_URL || '').trim()
+    if (envWsBaseUrl) {
+      return envWsBaseUrl.replace(/\/+$/, '')
+    }
+    if (import.meta.env.DEV) {
+      return 'ws://localhost:8123'
+    }
+    if (typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      return `${protocol}//${window.location.host}`
+    }
+    return 'ws://localhost:8123'
   }
 
   /**

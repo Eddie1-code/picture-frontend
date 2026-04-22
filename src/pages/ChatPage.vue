@@ -78,12 +78,24 @@
             <a-textarea
               v-model:value="draft"
               :auto-size="{ minRows: 1, maxRows: 4 }"
-              placeholder="输入消息，回车发送，Shift+回车换行"
+              placeholder="输入消息，回车发送，Shift+回车换行（也可发表情包）"
               @keydown.enter.exact.prevent="doSend"
             />
-            <a-button type="primary" :loading="sending" :disabled="!draft.trim()" @click="doSend">
-              发送
-            </a-button>
+            <div class="chat-foot-actions">
+              <a-upload
+                :show-upload-list="false"
+                accept="image/*"
+                :before-upload="onBeforeUploadSticker"
+              >
+                <a-button :loading="sendingImage" :disabled="sending">
+                  <template #icon><PictureOutlined /></template>
+                  发表情包
+                </a-button>
+              </a-upload>
+              <a-button type="primary" :loading="sending" :disabled="!draft.trim() || sendingImage" @click="doSend">
+                发送
+              </a-button>
+            </div>
           </footer>
         </template>
         <div v-else class="chat-main-empty">
@@ -97,6 +109,8 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { message as antdMessage } from 'ant-design-vue'
+import type { UploadProps } from 'ant-design-vue'
+import { PictureOutlined } from '@ant-design/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   getChatUnreadUsingGet,
@@ -105,6 +119,7 @@ import {
   markChatReadUsingPost,
   sendMessageUsingPost,
 } from '@/api/social.ts'
+import { uploadPostImageUsingPost } from '@/api/fileController.ts'
 import { getUserVoByIdUsingGet } from '@/api/userController.ts'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 
@@ -127,6 +142,7 @@ const oldestId = ref<number | null>(null)
 
 const draft = ref('')
 const sending = ref(false)
+const sendingImage = ref(false)
 
 const bodyRef = ref<HTMLDivElement | null>(null)
 let pollTimer: number | null = null
@@ -243,6 +259,58 @@ async function doSend() {
   } finally {
     sending.value = false
   }
+}
+
+async function sendImageMessage(imageUrl: string, messageSize?: number) {
+  if (!activeUserId.value) return
+  const clientMsgId = `${loginUserStore.loginUser?.id}-${Date.now()}`
+  const r = await sendMessageUsingPost({
+    receiverId: activeUserId.value,
+    content: '',
+    messageType: 'image',
+    messageUrl: imageUrl,
+    messageSize,
+    clientMsgId,
+  })
+  if (r.data.code === 0 && r.data.data) {
+    messages.value.push(r.data.data)
+    await scrollToBottom()
+    fetchConversations()
+    return
+  }
+  throw new Error(r.data.message || '发送失败')
+}
+
+const onBeforeUploadSticker: UploadProps['beforeUpload'] = async (file) => {
+  if (!activeUserId.value) {
+    antdMessage.warning('请先选择一个会话')
+    return false
+  }
+  if (sendingImage.value || sending.value) return false
+  const isImg = file.type?.startsWith('image/')
+  if (!isImg) {
+    antdMessage.error('只支持图片格式的表情包')
+    return false
+  }
+  const isLt3M = file.size / 1024 / 1024 < 3
+  if (!isLt3M) {
+    antdMessage.error('表情包大小不能超过 3MB')
+    return false
+  }
+  sendingImage.value = true
+  try {
+    const uploadRes = await uploadPostImageUsingPost({}, file as File)
+    const imageUrl = uploadRes.data?.data?.url
+    if (!uploadRes.data || uploadRes.data.code !== 0 || !imageUrl) {
+      throw new Error(uploadRes.data?.message || '上传失败')
+    }
+    await sendImageMessage(imageUrl, (file as File).size)
+  } catch (e: any) {
+    antdMessage.error('发表情包失败：' + (e?.message ?? '网络错误'))
+  } finally {
+    sendingImage.value = false
+  }
+  return false
 }
 
 function goProfile() {
@@ -532,6 +600,12 @@ watch(
   padding: 10px 12px;
   border-top: 1px solid var(--ds-border-subtle);
   background: rgba(255, 255, 255, 0.7);
+  align-items: flex-end;
+}
+.chat-foot-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 .chat-foot .ant-btn {
   align-self: flex-end;
