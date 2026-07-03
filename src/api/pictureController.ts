@@ -173,6 +173,14 @@ export async function doPictureReviewUsingPost(
   })
 }
 
+/** getPendingReviewCount GET /api/picture/review/pending-count */
+export async function getPendingReviewCountUsingGet(options?: { [key: string]: any }) {
+  return request<API.BaseResponseLong_>('/api/picture/review/pending-count', {
+    method: 'GET',
+    ...(options || {}),
+  })
+}
+
 /** searchPictureByColor POST /api/picture/search/color */
 export async function searchPictureByColorUsingPost(
   body: API.SearchPictureByColorRequest,

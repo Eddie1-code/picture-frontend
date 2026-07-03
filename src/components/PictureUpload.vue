@@ -42,7 +42,12 @@ const handleUpload = async ({ file }: any) => {
     params.spaceId = props.spaceId;
     const res = await uploadPictureUsingPost(params, {}, file)
     if (res.data.code === 0 && res.data.data) {
-      message.success('图片上传成功')
+      const data = res.data.data
+      if (data?.reviewStatus === 0) {
+        message.success('图片上传成功，正在等待管理员审核，审核通过后将公开展示')
+      } else {
+        message.success('图片上传成功')
+      }
       props.onSuccess?.(res.data.data)
     } else {
       message.error('图片上传失败，' + res.data.message)

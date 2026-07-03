@@ -126,6 +126,7 @@ import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import { userLogoutUsingPost } from '@/api/userController.ts'
 import { getFollowStatUsingGet } from '@/api/social.ts'
+import { getPendingReviewCountUsingGet } from '@/api/pictureController.ts'
 import MessageCenterPopover from '@/components/MessageCenterPopover.vue'
 import ChatEntry from '@/components/ChatEntry.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
@@ -190,6 +191,39 @@ const onMenuClick = ({ key }: { key: string }) => {
 
 const followCount = ref(0)
 const fansCount = ref(0)
+const pendingReviewCount = ref(0)
+
+async function fetchPendingReviewCount() {
+  const loginUser = loginUserStore.loginUser
+  if (!loginUser?.id || loginUser.userRole !== 'admin') {
+    pendingReviewCount.value = 0
+    return
+  }
+  try {
+    const r = await getPendingReviewCountUsingGet()
+    if (r.data.code === 0 && r.data.data != null) {
+      pendingReviewCount.value = Number(r.data.data)
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+// Poll pending review count every 60s for admins
+let pendingTimer: ReturnType<typeof setInterval> | null = null
+watch(
+  () => loginUserStore.loginUser?.id,
+  (id) => {
+    if (id) {
+      fetchPendingReviewCount()
+      pendingTimer = setInterval(fetchPendingReviewCount, 60000)
+    } else {
+      pendingReviewCount.value = 0
+      if (pendingTimer) { clearInterval(pendingTimer); pendingTimer = null }
+    }
+  },
+  { immediate: true },
+)
 
 async function fetchFollowStat() {
   const uid = loginUserStore.loginUser?.id
@@ -263,7 +297,19 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
   })
 }
 
-const items = computed<MenuProps['items']>(() => filterMenus(originItems))
+const items = computed<MenuProps['items']>(() => {
+  const filtered = filterMenus(originItems)
+  if (!filtered) return filtered
+  return filtered.map(item => {
+    if (item && (item as any).key === '/admin/pictureManage' && pendingReviewCount.value > 0) {
+      return {
+        ...item,
+        label: `图片管理 (${pendingReviewCount.value})`,
+      }
+    }
+    return item
+  })
+})
 
 router.afterEach((to) => {
   current.value = [to.path]

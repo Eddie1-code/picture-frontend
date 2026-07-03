@@ -151,19 +151,14 @@
                 <template #icon><CheckOutlined /></template>
               </a-button>
             </a-tooltip>
-            <a-popconfirm
-              v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.REJECT"
-              title="确定要拒绝该图片吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="handleReview(record, PIC_REVIEW_STATUS_ENUM.REJECT)"
-            >
-              <a-tooltip title="拒绝">
-                <a-button class="ds-act-icon ds-act-icon--danger">
-                  <template #icon><StopOutlined /></template>
-                </a-button>
-              </a-tooltip>
-            </a-popconfirm>
+            <a-tooltip v-if="record.reviewStatus !== PIC_REVIEW_STATUS_ENUM.REJECT" title="拒绝">
+              <a-button
+                class="ds-act-icon ds-act-icon--danger"
+                @click="openRejectModal(record)"
+              >
+                <template #icon><StopOutlined /></template>
+              </a-button>
+            </a-tooltip>
             <a-tooltip title="编辑">
               <a-button
                 class="ds-act-icon ds-act-icon--primary"
@@ -191,6 +186,23 @@
       </div>
     </div>
   </div>
+
+  <!-- 拒绝原因弹窗 -->
+  <a-modal
+    v-model:open="rejectModalVisible"
+    title="拒绝图片"
+    ok-text="确认拒绝"
+    cancel-text="取消"
+    @ok="confirmReject"
+  >
+    <a-textarea
+      v-model:value="rejectMessage"
+      placeholder="请输入拒绝原因（选填）"
+      :rows="3"
+      :maxlength="512"
+      show-count
+    />
+  </a-modal>
 </template>
 
 <script lang="ts" setup>
@@ -460,9 +472,11 @@ const doDelete = async (id: string | number) => {
   }
 }
 
-const handleReview = async (record: API.Picture, reviewStatus: number) => {
+const handleReview = async (record: API.Picture, reviewStatus: number, customMessage?: string) => {
   const reviewMessage =
-    reviewStatus === PIC_REVIEW_STATUS_ENUM.PASS ? '管理员操作通过' : '管理员操作拒绝'
+    reviewStatus === PIC_REVIEW_STATUS_ENUM.PASS
+      ? '管理员操作通过'
+      : (customMessage || '管理员操作拒绝')
   const res = await doPictureReviewUsingPost({
     id: record.id,
     reviewStatus,
@@ -474,6 +488,24 @@ const handleReview = async (record: API.Picture, reviewStatus: number) => {
   } else {
     message.error('审核操作失败，' + res.data.message)
   }
+}
+
+// 拒绝弹窗
+const rejectModalVisible = ref(false)
+const rejectingRecord = ref<API.Picture | null>(null)
+const rejectMessage = ref('')
+
+const openRejectModal = (record: API.Picture) => {
+  rejectingRecord.value = record
+  rejectMessage.value = ''
+  rejectModalVisible.value = true
+}
+
+const confirmReject = () => {
+  if (rejectingRecord.value) {
+    handleReview(rejectingRecord.value, PIC_REVIEW_STATUS_ENUM.REJECT, rejectMessage.value.trim() || undefined)
+  }
+  rejectModalVisible.value = false
 }
 
 const goToAddPicture = () => {

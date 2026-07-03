@@ -104,6 +104,14 @@
                         <a-tag v-if="pic.category" class="works-tag">{{ pic.category }}</a-tag>
                         <span class="works-time">{{ formatTime(pic.createTime) }}</span>
                       </div>
+                      <div v-if="isMe && pic.reviewStatus !== undefined" class="works-review">
+                        <a-tag :color="reviewTagColor(pic.reviewStatus)">
+                          {{ PIC_REVIEW_STATUS_MAP[pic.reviewStatus] ?? '未知' }}
+                        </a-tag>
+                        <a-tooltip v-if="pic.reviewMessage" :title="pic.reviewMessage">
+                          <span class="works-review-msg">{{ pic.reviewMessage }}</span>
+                        </a-tooltip>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -223,6 +231,7 @@ import FollowListPane from '@/components/FollowListPane.vue'
 import PostCard from '@/components/PostCard.vue'
 import VipBadge from '@/components/VipBadge.vue'
 import AdminBadge from '@/components/AdminBadge.vue'
+import { PIC_REVIEW_STATUS_ENUM, PIC_REVIEW_STATUS_MAP } from '@/constants/picture.ts'
 import { listPostVoByPageUsingPost, type PostItem } from '@/api/post.ts'
 
 // 注：部分 API wrapper 保留最小代码；Swagger 重生成时不会覆盖本页面。
@@ -505,6 +514,13 @@ function formatTime(t?: string | Date) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 }
 
+function reviewTagColor(status: number | undefined): string {
+  if (status === PIC_REVIEW_STATUS_ENUM.PASS) return 'success'
+  if (status === PIC_REVIEW_STATUS_ENUM.REJECT) return 'error'
+  if (status === PIC_REVIEW_STATUS_ENUM.REVIEWING) return 'processing'
+  return 'default'
+}
+
 // ========== 生命周期 ==========
 
 watch(
@@ -714,6 +730,20 @@ onMounted(fetchUser)
 .works-time {
   font-size: 11px;
   color: var(--ds-text-muted);
+}
+.works-review {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.works-review-msg {
+  font-size: 11px;
+  color: var(--ds-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
 }
 
 .pager {

@@ -831,6 +831,8 @@ declare namespace API {
     picScale?: number
     picSize?: number
     picWidth?: number
+    reviewMessage?: string
+    reviewStatus?: number
     shareCount?: number
     spaceId?: number
     tags?: string[]

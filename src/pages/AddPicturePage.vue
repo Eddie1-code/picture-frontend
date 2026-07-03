@@ -202,7 +202,13 @@ const handleSubmit = async (values: any) => {
     ...values,
   })
   if (res.data.code === 0 && res.data.data) {
-    message.success(isEditMode ? '更新成功' : '创建成功')
+    if (isEditMode) {
+      message.success('更新成功')
+    } else if (picture.value?.reviewStatus === 0) {
+      message.success('创建成功，图片正在等待管理员审核，审核通过后将公开展示')
+    } else {
+      message.success('创建成功')
+    }
     // 在空间内创建成功后，回到空间页并带上新图片 id，空间页可直接插入展示
     if (spaceId.value && !isEditMode) {
       go(`/space/${spaceId.value}?createdPictureId=${pictureId}`)

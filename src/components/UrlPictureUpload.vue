@@ -44,7 +44,12 @@ const handleUpload = async () => {
     }
     const res = await uploadPictureByUrlUsingPost(params)
     if (res.data.code === 0 && res.data.data) {
-      message.success('图片上传成功')
+      const data = res.data.data
+      if (data?.reviewStatus === 0) {
+        message.success('图片上传成功，正在等待管理员审核，审核通过后将公开展示')
+      } else {
+        message.success('图片上传成功')
+      }
       // 将上传成功的图片信息传递给父组件
       props.onSuccess?.(res.data.data)
     } else {

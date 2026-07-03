@@ -27,6 +27,15 @@
         >
           GitHub · EddieCww
         </a>
+        <span class="footer-divider">|</span>
+        <a
+          class="footer-link"
+          href="https://beian.miit.gov.cn/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          粤ICP备2025426176号-1
+        </a>
       </a-layout-footer>
     </a-layout>
     <GlobalFab />
@@ -153,5 +162,10 @@ onBeforeUnmount(() => {
 
 .footer-link:hover {
   color: var(--ds-accent);
+}
+
+.footer-divider {
+  margin: 0 10px;
+  color: var(--ds-text-tertiary, #ccc);
 }
 </style>
