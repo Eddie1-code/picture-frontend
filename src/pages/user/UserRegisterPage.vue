@@ -44,6 +44,27 @@
             >
               <a-input-password v-model:value="formState.checkPassword" placeholder="确认密码" size="large" />
             </a-form-item>
+            <a-form-item name="captchaCode" :rules="[{ required: true, message: '请输入验证码' }]">
+              <div class="captcha-row">
+                <a-input
+                  v-model:value="formState.captchaCode"
+                  placeholder="验证码（不区分大小写）"
+                  size="large"
+                  :maxlength="4"
+                  class="captcha-input"
+                />
+                <div class="captcha-img-wrap" @click="fetchCaptcha">
+                  <img
+                    v-if="captchaImage"
+                    :src="captchaImage"
+                    alt="验证码"
+                    class="captcha-img"
+                    :class="{ 'captcha-img--loading': captchaLoading }"
+                  />
+                  <span v-else class="captcha-placeholder">点击获取</span>
+                </div>
+              </div>
+            </a-form-item>
             <div class="step-actions">
               <a-button type="primary" html-type="submit" size="large" class="btn-wide">下一步</a-button>
             </div>
@@ -113,9 +134,9 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { userRegisterUsingPost } from '@/api/userController.ts'
+import { getCaptchaUsingGet, userRegisterUsingPost } from '@/api/userController.ts'
 import { message } from 'ant-design-vue'
 
 const router = useRouter()
@@ -123,13 +144,37 @@ const router = useRouter()
 const currentStep = ref(0)
 const submitting = ref(false)
 
-const formState = reactive<API.UserRegisterRequest>({
+const captchaImage = ref('')
+const captchaLoading = ref(false)
+
+const formState = reactive<API.UserRegisterRequest & { captchaId: string; captchaCode: string }>({
   userAccount: '',
   userPassword: '',
   checkPassword: '',
   userName: '',
   userProfile: '',
   userAvatar: undefined,
+  captchaId: '',
+  captchaCode: '',
+})
+
+const fetchCaptcha = async () => {
+  captchaLoading.value = true
+  try {
+    const res = await getCaptchaUsingGet()
+    if (res.data.code === 0 && res.data.data) {
+      formState.captchaId = res.data.data.captchaId || ''
+      captchaImage.value = res.data.data.captchaImage || ''
+    }
+  } catch {
+    // ignore
+  } finally {
+    captchaLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchCaptcha()
 })
 
 const goNextFromStep0 = () => {
@@ -165,6 +210,8 @@ const submitRegister = async () => {
       userName: (formState.userName?.trim() || account) || undefined,
       userProfile: formState.userProfile?.trim() || undefined,
       userAvatar: undefined,
+      captchaId: formState.captchaId,
+      captchaCode: formState.captchaCode,
     }
     const res = await userRegisterUsingPost(body)
     if (res.data.code === 0 && res.data.data) {
@@ -281,5 +328,44 @@ const submitRegister = async () => {
 .step-fade-leave-to {
   opacity: 0;
   transform: translateX(-10px);
+}
+
+.captcha-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.captcha-input {
+  flex: 1;
+}
+
+.captcha-img-wrap {
+  flex-shrink: 0;
+  width: 120px;
+  height: 40px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ds-bg-elevated);
+}
+
+.captcha-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.captcha-img--loading {
+  opacity: 0.5;
+}
+
+.captcha-placeholder {
+  font-size: 13px;
+  color: var(--ds-text-muted);
 }
 </style>

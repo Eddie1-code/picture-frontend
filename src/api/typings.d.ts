@@ -137,6 +137,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseMapStringString_ = {
+    code?: number
+    data?: Record<string, any>
+    message?: string
+  }
+
   type BaseResponseNotifyUnreadVO_ = {
     code?: number
     data?: NotifyUnreadVO
@@ -536,6 +542,8 @@ declare namespace API {
     vipExpireTime?: string
     vipNumber?: string
   }
+
+  type MapStringString_ = true
 
   type markReadUsingPOSTParams = {
     /** targetUserId */
@@ -1198,6 +1206,8 @@ declare namespace API {
   }
 
   type UserRegisterRequest = {
+    captchaCode?: string
+    captchaId?: string
     checkPassword?: string
     userAccount?: string
     userAvatar?: string
