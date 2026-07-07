@@ -239,3 +239,78 @@ export async function uploadAvatarUsingPost(
     ...(options || {}),
   })
 }
+
+/** sendEmailCode POST /api/user/email/code */
+export async function sendEmailCodeUsingPost(
+  body: API.UserUpdateRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/user/email/code', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** bindEmail POST /api/user/email/bind */
+export async function bindEmailUsingPost(
+  body: API.UserUpdateRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/user/email/bind', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** changePassword POST /api/user/password/change */
+export async function changePasswordUsingPost(
+  body: API.ChangePasswordRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/user/password/change', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** requestPasswordReset POST /api/user/password/reset-request */
+export async function requestPasswordResetUsingPost(
+  body: API.PasswordResetRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/user/password/reset-request', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** executePasswordReset POST /api/user/password/reset */
+export async function executePasswordResetUsingPost(
+  body: API.PasswordResetExecuteRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>('/api/user/password/reset', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}

@@ -23,6 +23,8 @@
         </a-form-item>
 
         <div class="tips">
+          <RouterLink to="/user/forgot-password">忘记密码？</RouterLink>
+          <span style="margin: 0 8px">|</span>
           没有账号？
           <RouterLink to="/user/register">去注册</RouterLink>
         </div>

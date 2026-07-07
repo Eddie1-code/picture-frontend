@@ -65,6 +65,11 @@
                 </div>
               </div>
             </a-form-item>
+            <a-form-item name="email" :rules="[
+              { type: 'email', message: '邮箱格式不正确' },
+            ]">
+              <a-input v-model:value="formState.email" placeholder="邮箱（选填，用于找回密码）" size="large" />
+            </a-form-item>
             <div class="step-actions">
               <a-button type="primary" html-type="submit" size="large" class="btn-wide">下一步</a-button>
             </div>
@@ -147,7 +152,7 @@ const submitting = ref(false)
 const captchaImage = ref('')
 const captchaLoading = ref(false)
 
-const formState = reactive<API.UserRegisterRequest & { captchaId: string; captchaCode: string }>({
+const formState = reactive<API.UserRegisterRequest & { captchaId: string; captchaCode: string; email: string }>({
   userAccount: '',
   userPassword: '',
   checkPassword: '',
@@ -156,6 +161,7 @@ const formState = reactive<API.UserRegisterRequest & { captchaId: string; captch
   userAvatar: undefined,
   captchaId: '',
   captchaCode: '',
+  email: '',
 })
 
 const fetchCaptcha = async () => {
@@ -202,7 +208,7 @@ const submitRegister = async () => {
   submitting.value = true
   try {
     const account = formState.userAccount?.trim() ?? ''
-    const body: API.UserRegisterRequest = {
+    const body = {
       userAccount: account,
       userPassword: formState.userPassword,
       checkPassword: formState.checkPassword,
@@ -212,6 +218,7 @@ const submitRegister = async () => {
       userAvatar: undefined,
       captchaId: formState.captchaId,
       captchaCode: formState.captchaCode,
+      email: formState.email?.trim() || undefined,
     }
     const res = await userRegisterUsingPost(body)
     if (res.data.code === 0 && res.data.data) {

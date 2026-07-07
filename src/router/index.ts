@@ -5,6 +5,10 @@ import UserManagePage from '@/pages/admin/UserManagePage.vue'
 import UserRegisterPage from '@/pages/user/UserRegisterPage.vue'
 import UserCenterPage from '@/pages/user/UserCenterPage.vue'
 import UserProfilePage from '@/pages/user/UserProfilePage.vue'
+import ForgotPasswordPage from '@/pages/user/ForgotPasswordPage.vue'
+import ResetPasswordPage from '@/pages/user/ResetPasswordPage.vue'
+import ChangePasswordPage from '@/pages/user/ChangePasswordPage.vue'
+import NotFoundPage from '@/pages/NotFoundPage.vue'
 
 import PictureManagePage from '@/pages/admin/PictureManagePage.vue'
 import PictureDetailPage from '@/pages/PictureDetailPage.vue'
@@ -59,6 +63,21 @@ const router = createRouter({
       name: '用户主页',
       component: UserProfilePage,
       props: true,
+    },
+    {
+      path: '/user/forgot-password',
+      name: '忘记密码',
+      component: ForgotPasswordPage,
+    },
+    {
+      path: '/user/reset-password',
+      name: '重置密码',
+      component: ResetPasswordPage,
+    },
+    {
+      path: '/user/change-password',
+      name: '修改密码',
+      component: ChangePasswordPage,
     },
     {
       path: '/admin/userManage',
@@ -166,6 +185,11 @@ const router = createRouter({
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: '404',
+      component: NotFoundPage,
     },
   ],
 })

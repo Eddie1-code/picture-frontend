@@ -55,6 +55,41 @@
                 </template>
               </a-input>
             </a-form-item>
+            <a-form-item label="绑定邮箱">
+              <a-row :gutter="12" style="width: 100%">
+                <a-col :span="15">
+                  <a-input
+                    v-model:value="emailForm.email"
+                    class="field-input"
+                    placeholder="用于找回密码"
+                    disabled
+                  />
+                </a-col>
+                <a-col :span="9">
+                  <a-button
+                    size="middle"
+                    style="width: 100%"
+                    @click="showEmailBindModal = true"
+                    v-if="!emailForm.email"
+                  >
+                    绑定邮箱
+                  </a-button>
+                  <a-button
+                    size="middle"
+                    style="width: 100%"
+                    @click="showEmailBindModal = true"
+                    v-else
+                  >
+                    修改邮箱
+                  </a-button>
+                </a-col>
+              </a-row>
+            </a-form-item>
+            <div style="margin-bottom: 16px; text-align: right">
+              <RouterLink to="/user/change-password" style="font-size: 13px; color: var(--ds-text-muted)">
+                修改密码 »
+              </RouterLink>
+            </div>
             <a-form-item
               label="个人简介"
               name="userProfile"
@@ -98,16 +133,53 @@
       </div>
     </section>
 
+    <a-modal
+      v-model:open="showEmailBindModal"
+      :title="emailForm.email ? '修改邮箱' : '绑定邮箱'"
+      :footer="null"
+      :maskClosable="false"
+      width="420px"
+      @cancel="onEmailModalCancel"
+    >
+      <div class="email-bind-form">
+        <div class="email-bind-field">
+          <label class="email-bind-label">邮箱地址</label>
+          <a-input v-model:value="emailBindInput" placeholder="请输入邮箱" size="large" />
+        </div>
+        <div class="email-bind-field">
+          <label class="email-bind-label">验证码</label>
+          <a-row :gutter="12" style="width: 100%">
+            <a-col :span="15">
+              <a-input v-model:value="emailCodeInput" placeholder="6位验证码" size="large" :maxlength="6" />
+            </a-col>
+            <a-col :span="9">
+              <a-button
+                size="large"
+                style="width: 100%"
+                :disabled="!emailBindInput || !EMAIL_RE.test(emailBindInput.trim()) || emailCd > 0"
+                @click="sendBindCode"
+                :loading="emailSending"
+              >
+                {{ emailCd > 0 ? emailCd + 's' : '获取验证码' }}
+              </a-button>
+            </a-col>
+          </a-row>
+        </div>
+        <a-button type="primary" size="large" style="width: 100%; margin-top: 16px" :loading="emailBinding" @click="doBindEmail">
+          {{ emailForm.email ? '确认修改' : '确认绑定' }}
+        </a-button>
+      </div>
+    </a-modal>
     <AvatarCropperModal ref="avatarCropperRef" @success="onAvatarCropSuccess" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue'
 import AvatarCropperModal from '@/components/AvatarCropperModal.vue'
-import { getLoginUserUsingGet, updateMyProfileUsingPost } from '@/api/userController'
+import { getLoginUserUsingGet, updateMyProfileUsingPost, sendEmailCodeUsingPost, bindEmailUsingPost } from '@/api/userController'
 import { getMyPrivacyUsingGet, updateMyPrivacyUsingPost } from '@/api/privacy.ts'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 
@@ -219,6 +291,7 @@ onMounted(async () => {
     displayUserId.value = String(res.data.data.id ?? '')
     form.value.userPassword = ''
     pendingAvatarUrl.value = ''
+    loadEmail()
   }
   fetchPrivacy()
 })
@@ -263,6 +336,101 @@ const onAvatarCropSuccess = (payload: { url: string; previewBlob: Blob }) => {
   resetLocalAvatarPreview()
   localAvatarPreviewUrl.value = URL.createObjectURL(payload.previewBlob)
   pendingAvatarUrl.value = payload.url
+}
+
+// ========== 邮箱绑定 ==========
+const showEmailBindModal = ref(false)
+const emailBindInput = ref('')
+const emailCodeInput = ref('')
+const emailCd = ref(0)
+const emailSending = ref(false)
+const emailBinding = ref(false)
+let emailCdTimer: ReturnType<typeof setInterval> | null = null
+
+const emailForm = reactive({
+  email: '',
+})
+
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
+const sendBindCode = async () => {
+  const email = emailBindInput.value.trim()
+  if (!email) {
+    message.error('请输入邮箱')
+    return
+  }
+  if (!EMAIL_RE.test(email)) {
+    message.error('邮箱格式不正确')
+    return
+  }
+  emailSending.value = true
+  try {
+    const res = await sendEmailCodeUsingPost({ email } as API.UserUpdateRequest)
+    if (res.data?.code === 0) {
+      message.success('验证码已发送，请查收邮件')
+      emailCd.value = 60
+      emailCdTimer = setInterval(() => {
+        emailCd.value--
+        if (emailCd.value <= 0 && emailCdTimer) {
+          clearInterval(emailCdTimer)
+        }
+      }, 1000)
+    } else {
+      message.error(res.data?.message || '发送失败')
+    }
+  } catch (e: any) {
+    message.error(e?.response?.data?.message || '发送失败，请稍后重试')
+  } finally {
+    emailSending.value = false
+  }
+}
+
+const doBindEmail = async () => {
+  if (!emailBindInput.value.trim()) {
+    message.error('请输入邮箱')
+    return
+  }
+  if (!EMAIL_RE.test(emailBindInput.value.trim())) {
+    message.error('邮箱格式不正确')
+    return
+  }
+  if (!emailCodeInput.value.trim()) {
+    message.error('请输入验证码')
+    return
+  }
+  emailBinding.value = true
+  try {
+    const res = await bindEmailUsingPost({
+      email: emailBindInput.value.trim(),
+      emailCode: emailCodeInput.value.trim(),
+    } as API.UserUpdateRequest)
+    if (res.data?.code === 0) {
+      message.success(emailForm.email ? '邮箱修改成功' : '邮箱绑定成功')
+      emailForm.email = emailBindInput.value.trim()
+      showEmailBindModal.value = false
+      emailBindInput.value = ''
+      emailCodeInput.value = ''
+    } else {
+      message.error(res.data?.message || '绑定失败')
+    }
+  } catch (e: any) {
+    message.error(e?.response?.data?.message || '操作失败，请稍后重试')
+  } finally {
+    emailBinding.value = false
+  }
+}
+
+const onEmailModalCancel = () => {
+  emailBindInput.value = ''
+  emailCodeInput.value = ''
+}
+
+// Load email from login user
+const loadEmail = () => {
+  if (form.value.userAccount) {
+    // The loginUserVO includes email field now
+    emailForm.email = (form.value as any).email || ''
+  }
 }
 
 const copyUserId = async () => {
@@ -519,5 +687,17 @@ const copyUserId = async () => {
   color: var(--ds-text-muted);
   margin-top: 4px;
   line-height: 1.5;
+}
+
+.email-bind-field {
+  margin-bottom: 16px;
+}
+
+.email-bind-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-text-primary);
 }
 </style>
